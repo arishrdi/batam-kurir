@@ -1,0 +1,24 @@
+{
+  "name": "admin-lte",
+  "description": "Responsive open source admin dashboard and control panel.",
+  "version": "3.2.0",
+  "license": "MIT",
+  "author": "Colorlib <https://colorlib.com>",
+  "main": "dist/js/adminlte.min.js",
+  "homepage": "https://adminlte.io",
+  "style": "dist/css/adminlte.css",
+  "sass": "build/scss/adminlte.scss",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.4",
+    "@sweetalert2/theme-bootstrap-4": "^5.0.8",
+    "bootstrap": "^4.6.1",
+    "bs-custom-file-input": "^1.3.4",
+    "jquery": "^3.6.0",
+    "moment": "^2.29.1",
+    "overlayscrollbars": "^1.13.1",
+    "popper.js": "^1.16.1",
+    "select2": "^4.0.13",
+    "sweetalert2": "^11.4.0",
+    "toastr": "^2.1.4"
+  }
+}

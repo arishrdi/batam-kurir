@@ -1,0 +1,532 @@
+<!-- Load Dependency CSS -->
+<?php include 'theme/main_header.php'; ?>
+<!-- Load Dependency CSS -->
+
+<body class="hold-transition layout-top-nav bg-light-gray">
+    <div class="wrapper">
+        <!-- Load Nav Header -->
+        <?php
+        include 'theme/header.php';
+        /* Select Kurir */
+        $query_kurir    = mysqli_query($con, "SELECT * FROM mst_kurir WHERE NOT kurir_name='Administrator' AND is_validate=1 ORDER BY kurir_name ASC");
+        /* Select Kurir */
+
+        /* Select Option Pick Up */
+        $query_pickup   = mysqli_query($con, "SELECT * FROM dlv_pickup WHERE id NOT IN (SELECT pickup_id FROM trx_delivery WHERE NOT status_pickup='PENDING')");
+        /* Select Option Pick Up */
+
+
+        /* Query Data - Show latest delivery attempt per pickup */
+        $query_data     = "SELECT
+        dlv_pickup.id AS pickup_id,
+        trx_delivery.id AS delivery_id,
+        dlv_pickup.pickup_date,
+        trx_delivery.delivery_date,
+        dlv_pickup.kurir_id AS kurir_pick_up_id,
+        mst_kurir.kurir_name AS kurir_pick_up,
+        CASE 
+            WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
+            ELSE ''
+        END AS kurir_delivery_id,
+        CASE
+            WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+            ELSE '-'
+        END AS kurir_delivery,
+        dlv_pickup.resi_code,
+        dlv_pickup.cs_name,
+        CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+        dlv_pickup.price,
+        dlv_pickup.shiping_cost,
+        dlv_pickup.status_pickup,
+        trx_delivery.status_delivery
+    FROM dlv_pickup 
+        JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+        LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+            AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+    WHERE 1=1";
+
+        /* Jika Pencarian Aktif */
+        if ($_GET['kurir'] ?? "" != "") {
+            $kurir_id   = $_GET['kurir'];
+            $query_data = $query_data . " AND trx_delivery.kurir_id='$kurir_id'";
+
+            $cek_kurir  = mysqli_query($con, "SELECT * FROM mst_kurir WHERE id=$kurir_id");
+            $row_kurir  = mysqli_fetch_assoc($cek_kurir);
+            $kode_kurir = getInitials($row_kurir['kurir_name']) . $row_kurir['id'];
+        } else {
+            $kurir_id   = '';
+            $kode_kurir = '';
+        }
+
+        if ($_GET['cari'] ?? "" != "") {
+            $pencarian  = $_GET['cari'];
+            $query_data = $query_data . " AND (dlv_pickup.resi_code LIKE '%$pencarian%'
+        OR dlv_pickup.cs_name LIKE '%$pencarian%'
+        OR dlv_pickup.seller_phone_no LIKE '%$pencarian%'
+        OR mst_kurir.kurir_name LIKE '%$pencarian%'
+        OR trx_delivery.status_delivery='$pencarian')";
+        } else {
+            $pencarian  = '';
+        }
+
+        if ($_GET['date'] ?? "" != "") {
+            $date       = $_GET['date'];
+            $query_data = $query_data . " AND trx_delivery.delivery_date='$date'";
+        } else {
+            $date       = date('Y-m-d');
+            $query_data = $query_data . " AND trx_delivery.delivery_date='$date'";
+        }
+
+        /* Menampilkan Data */
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY trx_delivery.id ASC");
+        $all_data       = mysqli_num_rows($sql_data);
+        $no_urut        = 1;
+
+        /* Calculate Main Table Totals */
+        $main_total_price = 0;
+        $main_total_shipping = 0;
+        $main_temp_data = [];
+        while ($main_row = mysqli_fetch_assoc($sql_data)) {
+            $main_temp_data[] = $main_row;
+            $main_total_price += $main_row['price'];
+            $main_total_shipping += $main_row['shiping_cost'];
+        }
+        $sql_data = $main_temp_data;
+
+        /* Pending Table Data - Today - Show latest delivery attempt per pickup */
+        $today = date('Y-m-d');
+        $query_pending = "SELECT
+                dlv_pickup.id AS pickup_id,
+                trx_delivery.id AS delivery_id,
+                dlv_pickup.pickup_date,
+                trx_delivery.delivery_date,
+                dlv_pickup.kurir_id AS kurir_pick_up_id,
+                mst_kurir.kurir_name AS kurir_pick_up,
+                CASE 
+                    WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
+                    ELSE ''
+                END AS kurir_delivery_id,
+                CASE
+                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                    ELSE '-'
+                END AS kurir_delivery,
+                dlv_pickup.resi_code,
+                dlv_pickup.cs_name,
+                dlv_pickup.price,
+                dlv_pickup.shiping_cost,
+                trx_delivery.status_delivery
+            FROM dlv_pickup 
+                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+            WHERE trx_delivery.status_delivery='PENDING' 
+                AND trx_delivery.delivery_date='$today'";
+
+        $sql_pending_data = mysqli_query($con, "$query_pending ORDER BY trx_delivery.id DESC");
+        $pending_data_count = mysqli_num_rows($sql_pending_data);
+        $pending_no_urut = 1;
+
+        /* Calculate Pending Totals */
+        $pending_total_price = 0;
+        $pending_total_shipping = 0;
+        $pending_temp_data = [];
+        while ($pending_row = mysqli_fetch_assoc($sql_pending_data)) {
+            $pending_temp_data[] = $pending_row;
+            $pending_total_price += $pending_row['price'];
+            $pending_total_shipping += $pending_row['shiping_cost'];
+        }
+        $sql_pending_data = $pending_temp_data;
+
+        /* Cancel Table Data - Today - Show latest delivery attempt per pickup */
+        $query_cancel = "SELECT
+                dlv_pickup.id AS pickup_id,
+                trx_delivery.id AS delivery_id,
+                dlv_pickup.pickup_date,
+                trx_delivery.delivery_date,
+                dlv_pickup.kurir_id AS kurir_pick_up_id,
+                mst_kurir.kurir_name AS kurir_pick_up,
+                CASE 
+                    WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
+                    ELSE ''
+                END AS kurir_delivery_id,
+                CASE
+                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                    ELSE '-'
+                END AS kurir_delivery,
+                dlv_pickup.resi_code,
+                dlv_pickup.cs_name,
+                dlv_pickup.price,
+                dlv_pickup.shiping_cost,
+                trx_delivery.status_delivery
+            FROM dlv_pickup 
+                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+            WHERE trx_delivery.status_delivery='CANCEL' 
+                AND trx_delivery.delivery_date='$today'";
+
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY trx_delivery.id DESC");
+        $cancel_data_count = mysqli_num_rows($sql_cancel_data);
+        $cancel_no_urut = 1;
+
+        /* Calculate Cancel Totals */
+        $cancel_total_price = 0;
+        $cancel_total_shipping = 0;
+        $cancel_temp_data = [];
+        while ($cancel_row = mysqli_fetch_assoc($sql_cancel_data)) {
+            $cancel_temp_data[] = $cancel_row;
+            $cancel_total_price += $cancel_row['price'];
+            $cancel_total_shipping += $cancel_row['shiping_cost'];
+        }
+        $sql_cancel_data = $cancel_temp_data;
+        ?>
+        <!-- Load Nav Header  -->
+
+        <div class="content-wrapper bg-transparent" style="margin-top: 100px;">
+            <!-- Main content -->
+            <div class="content">
+                <div class="container-fluid px-4 mt-4">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="card card-primary rounded-md" style="border-top: 4px solid #263D57;">
+                                <div class="card-body p-3">
+                                    <h6 class="text-bold text-center mb-3">Form Delivery</h6>
+                                    <form id="insert-deliv">
+                                        <input type="hidden" name="delivery_date" value="<?= date('Y-m-d'); ?>">
+                                        <input type="hidden" name="kurir_id" value="<?= $data_kurir['id'] ?>">
+
+                                        <div class="form-group mb-3">
+                                            <select name="kurir_id" class="form-control rounded-sm select2bs4" required>
+                                                <option value="">PILIH KURIR</option>
+                                                <?php foreach ($query_kurir as $val_kurir) { ?>
+                                                    <option value="<?= $val_kurir['id'] ?>"><?= strtoupper($val_kurir['kurir_name']) ?></option>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-3">
+                                            <select name="pickup_id" class="form-control select2bs4 rounded-sm fs-13" required>
+                                                <option value="">KODE RESI</option>
+                                                <?php foreach ($query_pickup as $row_pick) { ?>
+                                                    <option value="<?= $row_pick['id'] ?>"><?= $row_pick['resi_code'] ?></option>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <button type="submit" id="submit" class="btn py-2 text-semibold btn-warning rounded-sm border-0 ls3 fs-12 hover px-4">Add</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card rounded-md">
+                                <div class="card-body py-2 text-semibold">
+                                    <div class="row">
+                                        <div class="col-md-1 py-1">Kurir:</div>
+                                        <div class="col-md-3 py-1">
+                                            <select onchange="changekurir(this)" class="form-control rounded-sm select2bs4" required>
+                                                <option <?= $kurir_id == '' ? 'selected' : ''; ?> value=""> PILIH KURIR </option>
+                                                <?php foreach ($query_kurir as $val_kurir) { ?>
+                                                    <option <?= $kurir_id == $val_kurir['id'] ? 'selected' : ''; ?> value="<?= $val_kurir['id'] ?>"><?= strtoupper($val_kurir['kurir_name']) ?></option>
+                                                <?php } ?>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card card-primary rounded-md" style="border-top: 4px solid #263D57;">
+                                <div class="card-body p-3">
+                                    <button class="btn btn-warning btn-block ls-1 text-semibold text-uppercase rounded-pill">DATA DELIVERY</button>
+                                    <a href="export/delivery.php?kurir=<?= $kurir_id ?>&cari=<?= $pencarian ?>&date=<?= $date ?>" class="btn btn-sm btn-success border-0 rounded-sm px-4 mt-3 mb-0 hover float-right"><i class="fas fa-file-excel pr-2"></i>Export</a>
+                                </div>
+
+                                <div class="card-body pt-1 pb-1">
+
+                                    <div class="float-right">
+                                        <div class="form-inline mb-2">
+                                            <div class="input-group input-group-sm">
+                                                <input type="date" id="date_search" value="<?= $date ?>" max="<?= date('Y-m-d'); ?>" class="form-control form-control-sm px-3 my-auto rounded-0 fs-12">
+                                                <input type="text" name="cari" maxlength="50" onkeyup="searchData(this)" onchange="search(this)" value="<?= $pencarian ?>" class="form-control px-3 my-auto rounded-0 fs-13 mb-2" placeholder="Search Data">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-body pt-1">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless table-striped table-border-dark table-hover w-100 mb-0 pb-0">
+                                            <thead>
+                                                <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12 ">
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-left" style="vertical-align: middle !important;">No Hp Seller</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+    <?php
+    if ($all_data <= 0) {
+        echo '<tr>
+            <td colspan="10" class="text-center fs-12">Record Not Found</td>
+        </tr>';
+    } else {
+        foreach ($sql_data as $rows) {
+            $kode_kurir_pickup  = getInitials($rows['kurir_pick_up']) . $rows['kurir_pick_up_id'];
+            $kode_kurir_delivery = getInitials($rows['kurir_delivery']) . $rows['kurir_delivery_id'];
+            $price              = $rows['price'];
+            $shiping_cost       = $rows['shiping_cost'];
+            $status_delivery    = $rows['status_delivery'];
+    ?>
+            <tr class="fs-13 text-dark hover-light text-nowrap">
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_pick_up'] ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_delivery'] ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $rows['cs_name'] ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $rows['seller_phone_no'] ?></a></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $price; ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $shiping_cost; ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap">
+                    <select name="status_delivery" id="status_delivery<?= $rows['delivery_id']; ?>" onchange="
+                        var payload         = '<?= '?cari=' . $pencarian . '&date=' . $date ?>';
+                        var status_delivery = $(this).val();
+                        var date_search     = $('#date_search').val();
+                        $('#delivery_id').val(<?= $rows['delivery_id']; ?>);
+                        $('#status_delivery').val(status_delivery);
+                        if(status_delivery == '<?= $status_delivery ?>'){ // Kosongkan Form
+                            $('#delivery_id').val(null);
+                            $('#status_delivery').val(null);
+                        }else{ // Update Status Delivery
+                            var formData = $('#form-update-pickup').serialize(); // Mengambil data formulir
+                            $.ajax({
+                                url: 'proses/update/delivery.php',
+                                type: 'POST', 
+                                data: formData,
+                                success: function(data) {
+                                    if(data == 'Y') {
+                                        Toast.fire({  
+                                            icon: 'success',
+                                            title: 'Change Status Success', 
+                                            text: 'Status Delivery berhasil diperbarui',
+                                        });
+                                    }else {
+                                        Toast.fire({
+                                            icon: 'error',
+                                            title: 'Change Status Failed',
+                                            text: 'Tidak dapat memperbarui Status Delivery',
+                                        });
+                                    }
+                                    setTimeout(function(){
+                                        window.location.href='delivery.php'+payload;
+                                    }, 1500);
+                                }
+                            })
+                        }" class="form-control custom-select rounded-sm fs-13 py-1 border-0 h-75" required>
+                        <option <?= ($status_delivery == 'PROSES') ? 'selected' : '' ?> value="PROSES">PROSES</option>
+                        <option <?= ($status_delivery == 'PENDING') ? 'selected' : '' ?> value="PENDING">PENDING</option>
+                        <option <?= ($status_delivery == 'SUKSES') ? 'selected' : '' ?> value="SUKSES">SUKSES</option>
+                        <option <?= ($status_delivery == 'CANCEL') ? 'selected' : '' ?> value="CANCEL">CANCEL</option>
+                    </select>
+                </td>
+            </tr>
+        <?php } ?>
+        
+        <!-- Total Row for Main Delivery Table -->
+        <?php if ($all_data > 0) { ?>
+        <tr class="bg-light text-bold">
+            <td colspan="6" class="text-right py-2 fs-13">TOTAL DELIVERY:</td>
+            <td class="text-center py-2 fs-13"><?= $main_total_price ?></td>
+            <td class="text-center py-2 fs-13"><?= $main_total_shipping ?></td>
+            <td colspan="2"></td>
+        </tr>
+        <?php } ?>
+        
+    <?php } ?>
+</tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Hidden Form for Status Updates -->
+                                    <form id="form-update-pickup" style="display: none;">
+                                        <input type="hidden" name="id" id="delivery_id">
+                                        <input type="hidden" name="status_delivery" id="status_delivery">
+                                    </form>
+
+                                    <?php if ($all_data > 0) { ?>
+                                        <div class="d-inline-block float-left mt-3 fs-13">
+                                            <?= 'Total ' . $all_data . ' entries' ?>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pending Table for Today -->
+                        <div class="col-md-12">
+                            <div class="card card-warning rounded-md mt-3" style="border-top: 4px solid #FFC107;">
+                                <div class="card-body p-3">
+                                    <button class="btn btn-warning btn-block ls-1 text-semibold text-uppercase rounded-pill">TABEL PENDING HARI INI</button>
+                                </div>
+
+                                <div class="card-body pt-1">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless table-striped table-border-dark table-hover w-100 mb-0 pb-0">
+                                            <thead>
+                                                <tr class="bg-transparent bg-warning text-white lh-3 text-nowrap text-uppercase fs-12">
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pickup</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                if ($pending_data_count <= 0) {
+                                                    echo '<tr>
+                                                        <td colspan="9" class="text-center fs-12">No Pending Records Found</td>
+                                                    </tr>';
+                                                } else {
+                                                    foreach ($sql_pending_data as $pending_rows) {
+                                                        $pending_price = $pending_rows['price'];
+                                                        $pending_shipping_cost = $pending_rows['shiping_cost'];
+                                                ?>
+                                                        <tr class="fs-13 text-dark hover-light text-nowrap">
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_no_urut++ . '.'; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_pick_up'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_delivery'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['resi_code'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['cs_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $pending_price; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $pending_shipping_cost; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $pending_rows['status_delivery']; ?></td>
+                                                        </tr>
+                                                <?php }
+                                                } ?>
+                                                <?php if ($pending_data_count > 0) { ?>
+                                                    <tr class="bg-light text-bold">
+                                                        <td colspan="6" class="text-right py-2 fs-13">TOTAL PENDING:</td>
+                                                        <td class="text-center py-2 fs-13"><?= $pending_total_price ?></td>
+                                                        <td class="text-center py-2 fs-13"><?= $pending_total_shipping ?></td>
+                                                        <td></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <?php if ($pending_data_count > 0) { ?>
+                                        <div class="d-inline-block float-left mt-3 fs-13">
+                                            <?= 'Total ' . $pending_data_count . ' pending entries for today' ?>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cancel Table for Today -->
+                        <div class="col-md-12">
+                            <div class="card card-danger rounded-md mt-3" style="border-top: 4px solid #DC3545;">
+                                <div class="card-body p-3">
+                                    <button class="btn btn-danger btn-block ls-1 text-semibold text-uppercase rounded-pill">TABEL CANCEL HARI INI</button>
+                                </div>
+
+                                <div class="card-body pt-1">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless table-striped table-border-dark table-hover w-100 mb-0 pb-0">
+                                            <thead>
+                                                <tr class="bg-transparent bg-danger text-white lh-3 text-nowrap text-uppercase fs-12">
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pickup</th>
+                                                    <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                if ($cancel_data_count <= 0) {
+                                                    echo '<tr>
+                                                        <td colspan="9" class="text-center fs-12">No Cancel Records Found</td>
+                                                    </tr>';
+                                                } else {
+                                                    foreach ($sql_cancel_data as $cancel_rows) {
+                                                        $cancel_price = $cancel_rows['price'];
+                                                        $cancel_shipping_cost = $cancel_rows['shiping_cost'];
+                                                ?>
+                                                        <tr class="fs-13 text-dark hover-light text-nowrap">
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_pick_up'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_delivery'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_price; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_shipping_cost; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_delivery']; ?></td>
+                                                        </tr>
+                                                <?php }
+                                                } ?>
+                                                <?php if ($cancel_data_count > 0) { ?>
+                                                    <tr class="bg-light text-bold">
+                                                        <td colspan="6" class="text-right py-2 fs-13">TOTAL CANCEL:</td>
+                                                        <td class="text-center py-2 fs-13"><?= $cancel_total_price ?></td>
+                                                        <td class="text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
+                                                        <td></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <?php if ($cancel_data_count > 0) { ?>
+                                        <div class="d-inline-block float-left mt-3 fs-13">
+                                            <?= 'Total ' . $cancel_data_count . ' cancelled entries for today' ?>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <!-- Main content -->
+        </div>
+    </div>
+    <!-- Load Dependency JS -->
+    <?php
+    include 'theme/main_footer.php';
+    include 'theme/alert.php';
+    include 'theme/helper_search.php';
+    ?>
+    <!-- Load Dependency JS -->
+
+    <script>
+        $(document).ready(function() {
+            $('#date_search').change(function() {
+                var date = $(this).val();
+                var currentURL = window.location.href;
+                var url = new URL(currentURL);
+                url.searchParams.set('date', date);
+                window.location.href = url.toString();
+            });
+
+        });
+    </script>
+</body>
+
+</html>

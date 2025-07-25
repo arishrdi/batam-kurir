@@ -1,0 +1,58 @@
+# PHP
+*.log
+*.tmp
+*.cache
+
+# Database configuration (sensitive)
+config/conf.php
+config/db.php
+
+# Environment and local config
+.env
+.env.local
+.env.production
+
+# Dependencies
+theme/node_modules/
+vendor/
+composer.lock
+package-lock.json
+
+# User uploads
+theme/dist/img/kurir/*.jpg
+theme/dist/img/kurir/*.jpeg
+theme/dist/img/kurir/*.png
+theme/dist/img/kurir/*.gif
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.sql.bak
+
+# Session files
+sessions/
+
+# Error logs
+error.log
+php_errors.log
