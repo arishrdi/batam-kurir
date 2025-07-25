@@ -249,21 +249,22 @@ include '../../config/local_date.php'; // Load Database Koneksi
     $sheet->setCellValue('B2', strtoupper('Data Pick Up'));
     
     // Format Header Content
-        $spreadsheet->getActiveSheet()->mergeCells('B2:J2');
+        $spreadsheet->getActiveSheet()->mergeCells('B2:K2');
         $spreadsheet->getActiveSheet()->getStyle('B2')->applyFromArray($style_title);
-        $spreadsheet->getActiveSheet()->mergeCells('B3:J3');
+        $spreadsheet->getActiveSheet()->mergeCells('B3:K3');
     // Format Header Content
 /* Header Content */
 
 /* Body Content - Main Pickup Table */
     $sheet->setCellValue('B4', strtoupper('No'));
-    $sheet->setCellValue('C4', strtoupper('Kurir Pick Up'));
-    $sheet->setCellValue('D4', strtoupper('Kode Resi'));
-    $sheet->setCellValue('E4', strtoupper('Nama CS'));
-    $sheet->setCellValue('F4', strtoupper('No Hp Seller'));
-    $sheet->setCellValue('G4', strtoupper('Harga'));
-    $sheet->setCellValue('H4', strtoupper('Ongkir'));
-    $sheet->setCellValue('I4', strtoupper('Keterangan'));
+    $sheet->setCellValue('C4', strtoupper('ID'));
+    $sheet->setCellValue('D4', strtoupper('Kurir Pick Up'));
+    $sheet->setCellValue('E4', strtoupper('Kode Resi'));
+    $sheet->setCellValue('F4', strtoupper('Nama CS'));
+    $sheet->setCellValue('G4', strtoupper('No Hp Seller'));
+    $sheet->setCellValue('H4', strtoupper('Harga'));
+    $sheet->setCellValue('I4', strtoupper('Ongkir'));
+    $sheet->setCellValue('J4', strtoupper('Keterangan'));
     
     /* Thead Set Style */
         $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
@@ -274,6 +275,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getColumnDimension('G')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
 
         $spreadsheet->getActiveSheet()->getStyle('B4')->applyFromArray($style_thead);
         $spreadsheet->getActiveSheet()->getStyle('C4')->applyFromArray($style_thead_name);
@@ -283,6 +285,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getStyle('G4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('H4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('I4')->applyFromArray($style_thead_name);
+        $spreadsheet->getActiveSheet()->getStyle('J4')->applyFromArray($style_thead_name);
     /* Thead Set Style */
     
     /* Main Pickup Table */
@@ -296,13 +299,14 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $shiping_cost = $val_data['shiping_cost'];
 
             $sheet->setCellValue($col_first.$row_data, $index);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, strtoupper($val_data['kurir_name']));
-            $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($val_data['resi_code']));
-            $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($val_data['cs_name']));
-            $sheet->setCellValueExplicit(get_col($col_first, 4).$row_data, strtoupper($val_data['seller_phone_no']), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-            $sheet->setCellValue(get_col($col_first, 5).$row_data, $price);
-            $sheet->setCellValue(get_col($col_first, 6).$row_data, $shiping_cost);
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, strtoupper($val_data['status_pickup']));
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($val_data['kurir_name']));
+            $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($val_data['resi_code']));
+            $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($val_data['cs_name']));
+            $sheet->setCellValueExplicit(get_col($col_first, 5).$row_data, $val_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue(get_col($col_first, 6).$row_data, $price);
+            $sheet->setCellValue(get_col($col_first, 7).$row_data, $shiping_cost);
+            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($val_data['status_pickup']));
 
             for($i = 0; $i <= 8; $i++) {
                 $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
@@ -312,26 +316,28 @@ include '../../config/local_date.php'; // Load Database Koneksi
         
         // Add totals for main pickup table
         if($all_data > 0) {
-            $sheet->setCellValue('F'.$row_data, 'TOTAL:');
-            $sheet->setCellValue('G'.$row_data, $total_price);
-            $sheet->setCellValue('H'.$row_data, $total_shipping);
+            $sheet->setCellValue('G'.$row_data, 'TOTAL:');
+            $sheet->setCellValue('H'.$row_data, $total_price);
+            $sheet->setCellValue('I'.$row_data, $total_shipping);
+            $sheet->setCellValue('J'.$row_data, $total_price - $total_shipping);
             
-            $spreadsheet->getActiveSheet()->getStyle('F'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
         $row_data += 3;
 
         /* Cancel Table */
         $sheet->setCellValue('B'.$row_data, 'TABEL CANCEL - '.['','JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'][date('n')] . ' ' . date('Y'));
-        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':H'.$row_data);
+        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':I'.$row_data);
         $spreadsheet->getActiveSheet()->getStyle('B'.$row_data)->applyFromArray($style_title);
         $row_data += 2;
         
-        // Cancel table headers (8 columns: No, Tanggal, Kurir, Kode Resi, Nama CS, Harga, Ongkir, Keterangan)
+        // Cancel table headers - match HTML structure (No, ID, Kurir Delivery, Kode Resi, Nama CS, Harga, Ongkir, Keterangan)
         $sheet->setCellValue('B'.$row_data, 'No');
-        $sheet->setCellValue('C'.$row_data, 'Tanggal');
-        $sheet->setCellValue('D'.$row_data, 'Kurir');
+        $sheet->setCellValue('C'.$row_data, 'ID');
+        $sheet->setCellValue('D'.$row_data, 'Kurir Delivery');
         $sheet->setCellValue('E'.$row_data, 'Kode Resi');
         $sheet->setCellValue('F'.$row_data, 'Nama CS');
         $sheet->setCellValue('G'.$row_data, 'Harga');
@@ -349,7 +355,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $cancel_shipping_cost = $cancel_data['shiping_cost'];
 
             $sheet->setCellValue($col_first.$row_data, $cancel_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, date('d/m/Y', strtotime($cancel_data['pickup_date'])));
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['pickup_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['kurir_name']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($cancel_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($cancel_data['cs_name']));
@@ -368,10 +374,12 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $sheet->setCellValue('F'.$row_data, 'TOTAL CANCEL:');
             $sheet->setCellValue('G'.$row_data, $cancel_total_price);
             $sheet->setCellValue('H'.$row_data, $cancel_total_shipping);
+            $sheet->setCellValue('I'.$row_data, $cancel_total_price - $cancel_total_shipping);
             
             $spreadsheet->getActiveSheet()->getStyle('F'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
         }
     /* End All Tables */
 /* Body Content */

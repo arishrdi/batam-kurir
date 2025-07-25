@@ -31,7 +31,6 @@ CREATE TABLE `dlv_pickup`  (
   `seller_phone_no` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `price` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
   `shiping_cost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
-  `picture` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NULL DEFAULT NULL,
   `status_pickup` enum('PROSES','PENDING','SUKSES','CANCEL') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL COMMENT 'PROSES | PENDING | SUKSES | CANCEL',
   `date_created` datetime NOT NULL,
   `date_modified` datetime NULL DEFAULT NULL,

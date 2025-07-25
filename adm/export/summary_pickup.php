@@ -73,7 +73,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
     /* Jika Pencarian Aktif */
 
     /* Query Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
     /* Query Data */
 /* Get Data */ 
@@ -198,24 +198,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
     $sheet->setCellValue('B2', strtoupper('Data Summary Pick Up'));
     
     // Format Header Content
-        $spreadsheet->getActiveSheet()->mergeCells('B2:M2');
+        $spreadsheet->getActiveSheet()->mergeCells('B2:K2');
         $spreadsheet->getActiveSheet()->getStyle('B2')->applyFromArray($style_title);
-        $spreadsheet->getActiveSheet()->mergeCells('B3:M3');
+        $spreadsheet->getActiveSheet()->mergeCells('B3:K3');
     // Format Header Content
 /* Header Content */
 
 /* Body Content */
     $sheet->setCellValue('B4', strtoupper('No'));
-    $sheet->setCellValue('C4', strtoupper('Tanggal'));
+    $sheet->setCellValue('C4', strtoupper('ID'));
     $sheet->setCellValue('D4', strtoupper('Kurir Pick Up'));
     $sheet->setCellValue('E4', strtoupper('Kurir Delivery'));
     $sheet->setCellValue('F4', strtoupper('Kode Resi'));
     $sheet->setCellValue('G4', strtoupper('Nama CS'));
     $sheet->setCellValue('H4', strtoupper('No Hp Seller'));
-    $sheet->setCellValue('J4', strtoupper('Harga'));
-    $sheet->setCellValue('K4', strtoupper('Ongkir'));
-    $sheet->setCellValue('L4', strtoupper('Total'));
-    $sheet->setCellValue('M4', strtoupper('Keterangan'));
+    $sheet->setCellValue('I4', strtoupper('Harga'));
+    $sheet->setCellValue('J4', strtoupper('Ongkir'));
+    $sheet->setCellValue('K4', strtoupper('Keterangan'));
     
     /* Thead Set Style */
         $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
@@ -228,8 +227,6 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('L')->setAutoSize(true);
-        $spreadsheet->getActiveSheet()->getColumnDimension('M')->setAutoSize(true);
 
         $spreadsheet->getActiveSheet()->getStyle('B4')->applyFromArray($style_thead);
         $spreadsheet->getActiveSheet()->getStyle('C4')->applyFromArray($style_thead_name);
@@ -241,8 +238,6 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getStyle('I4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('J4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('K4')->applyFromArray($style_thead_name);
-        $spreadsheet->getActiveSheet()->getStyle('L4')->applyFromArray($style_thead_name);
-        $spreadsheet->getActiveSheet()->getStyle('M4')->applyFromArray($style_thead_name);
     /* Thead Set Style */
     
     /* Tbody */
@@ -254,72 +249,57 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 $index                  = $urut++;
                 $price                  = $val_data['price'];
                 $shiping_cost           = $val_data['shiping_cost'];
-                // Simplified total calculation: always price + shipping cost
+                // Match HTML calculation: price + shipping cost for array summation
                 $total_price            = $val_data['price'] + $val_data['shiping_cost'];
                 
-                // Simplified array summations
+                // Array summations for totals
                 $array_sum_price[]      = $val_data['price'];
                 $array_sum_cost[]       = $val_data['shiping_cost'];
                 $array_sum_total_price[]= $total_price;
 
-                $sheet->setCellValue($col_first.$row_data, strtoupper($index));
-                $sheet->setCellValue(get_col($col_first, 1).$row_data, strtoupper($val_data['pickup_date']));
+                $sheet->setCellValue($col_first.$row_data, $index);
+                $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['id']);
                 $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($val_data['kurir_pick_up']));
                 $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($val_data['kurir_delivery']));
                 $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($val_data['resi_code']));
                 $sheet->setCellValue(get_col($col_first, 5).$row_data, strtoupper($val_data['cs_name']));
-                $sheet->setCellValueExplicit(get_col($col_first, 6).$row_data, strtoupper($val_data['seller_phone_no']), \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
-                $sheet->setCellValue(get_col($col_first, 7).$row_data, strtoupper($price));
-                $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($shiping_cost));
-                $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($total_price));
-                $sheet->setCellValue(get_col($col_first, 10).$row_data, strtoupper($val_data['status_pickup']));
+                $sheet->setCellValueExplicit(get_col($col_first, 6).$row_data, $val_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+                $sheet->setCellValue(get_col($col_first, 7).$row_data, $price);
+                $sheet->setCellValue(get_col($col_first, 8).$row_data, $shiping_cost);
+                $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($val_data['status_pickup']));
 
-                $spreadsheet->getActiveSheet()->getStyle($col_first.$row_data)->applyFromArray($style_tbody);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 1).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 2).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 3).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 4).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 5).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 6).$row_data)->applyFromArray($style_tbody_name);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 7).$row_data)->applyFromArray($style_tbody);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 8).$row_data)->applyFromArray($style_tbody);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 9).$row_data)->applyFromArray($style_tbody);
-                $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 10).$row_data)->applyFromArray($style_tbody_name);
+                // Apply styles for 10 columns (B-K)
+                for($i = 0; $i <= 9; $i++) {
+                    $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
+                }
 
                 $row_data++;
             }
             $jumlah_price   = ($array_sum_price == '') ? 0 : array_sum($array_sum_price);
             $jumlah_cost    = ($array_sum_cost == '') ? 0 : array_sum($array_sum_cost);
-            $jumlah_total   = ($array_sum_total_price == '') ? 0 : array_sum($array_sum_total_price);
+            // Match HTML: difference calculation in totals
+            $jumlah_difference = $jumlah_price - $jumlah_cost;
 
-            $sheet->setCellValue($col_first.$row_data, strtoupper('JUMLAH'));
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, strtoupper($jumlah_price));
-            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($jumlah_cost));
-            $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($jumlah_total));
+            $sheet->setCellValue('H'.$row_data, 'TOTAL:');
+            $sheet->setCellValue('I'.$row_data, $jumlah_price);
+            $sheet->setCellValue('J'.$row_data, $jumlah_cost);
+            $sheet->setCellValue('K'.$row_data, $jumlah_difference);
 
-            $spreadsheet->getActiveSheet()->mergeCells($col_first.$row_data.':'.get_col($col_first, 6).$row_data);
-            $spreadsheet->getActiveSheet()->getStyle($col_first.$row_data.':'.get_col($col_first, 6).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 7).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 8).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 9).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->mergeCells(get_col($col_first, 10).$row_data.':'.get_col($col_first, 11).$row_data);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 10).$row_data.':'.get_col($col_first, 11).$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('K'.$row_data)->applyFromArray($style_thead);
         }else{
             $row_data       = 5;
-            $col_first      = 'B';
-            $urut           = 1;
-            $sheet->setCellValue($col_first.$row_data, strtoupper('JUMLAH'));
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, strtoupper('0 K'));
-            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper('0 K'));
-            $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper('0 K'));
+            $sheet->setCellValue('H'.$row_data, 'TOTAL:');
+            $sheet->setCellValue('I'.$row_data, 0);
+            $sheet->setCellValue('J'.$row_data, 0);
+            $sheet->setCellValue('K'.$row_data, 0);
 
-            $spreadsheet->getActiveSheet()->mergeCells($col_first.$row_data.':'.get_col($col_first, 6).$row_data);
-            $spreadsheet->getActiveSheet()->getStyle($col_first.$row_data.':'.get_col($col_first, 6).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 7).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 8).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 9).$row_data)->applyFromArray($style_thead);
-            $spreadsheet->getActiveSheet()->mergeCells(get_col($col_first, 10).$row_data.':'.get_col($col_first, 11).$row_data);
-            $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, 10).$row_data.':'.get_col($col_first, 11).$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('K'.$row_data)->applyFromArray($style_thead);
         }
     /* Tbody */ 
 /* Body Content */

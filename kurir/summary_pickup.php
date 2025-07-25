@@ -79,6 +79,7 @@
                                     <thead>
                                         <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                            <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>   
@@ -86,7 +87,6 @@
                                             <th class="py-0 lh-5 text-left" style="vertical-align: middle !important;">No Hp Seller</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
-                                            <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Total</th>
                                             <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
                                         </tr>
                                     </thead>
@@ -113,6 +113,7 @@
                                                 ?>
                                                 <tr class="fs-13 text-dark hover-light">
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++. '.'; ?></td>
+                                                    <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['id'] ?></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_pick_up'] ?></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_delivery'] ?></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
@@ -120,7 +121,6 @@
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $rows['seller_phone_no'] ?></a></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $price; ?></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $shiping_cost; ?></td>
-                                                    <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $total_price; ?></td>
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $rows['status_pickup']; ?></td>
                                                 </tr>
                                             <?php }
@@ -133,10 +133,10 @@
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAl : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_price : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_cost : 0); ?></th>
-                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_total : 0); ?></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_price - $jumlah_cost : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>

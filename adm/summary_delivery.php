@@ -270,10 +270,10 @@ include 'theme/main_header.php'; ?>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top  : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_cost_top   : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top - $jumlah_cost_top : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -337,10 +337,10 @@ include 'theme/main_header.php'; ?>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_price_pending : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_cost_pending : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_price_pending - $jumlah_cost_pending : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -404,10 +404,10 @@ include 'theme/main_header.php'; ?>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_cost_cancel : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel - $jumlah_cost_cancel : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -471,10 +471,10 @@ include 'theme/main_header.php'; ?>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_price_no_delivery : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_cost_no_delivery : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_price_no_delivery - $jumlah_cost_no_delivery : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>

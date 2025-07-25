@@ -69,6 +69,41 @@
         
         // Generate courier code for display
         $kode_kurir = ($data_kurir['kurir_name'] == 'Administrator') ? 'ADM' : getInitials($data_kurir['kurir_name']).$data_kurir['id'];
+
+        /* Cancel Table Data - Current Month for this kurir */
+        $current_month = date('Y-m');
+        $query_cancel = "SELECT 
+                dlv_pickup.id AS pickup_id,
+                dlv_pickup.pickup_date,
+                dlv_pickup.resi_code,
+                dlv_pickup.kurir_id,
+                mst_kurir.kurir_name,
+                dlv_pickup.cs_name,
+                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+                dlv_pickup.price,
+                dlv_pickup.shiping_cost,
+                dlv_pickup.status_pickup,
+                dlv_pickup.date_created
+            FROM dlv_pickup 
+                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+            WHERE dlv_pickup.status_pickup='CANCEL' 
+                AND dlv_pickup.kurir_id={$data_kurir['id']}
+                AND DATE_FORMAT(dlv_pickup.pickup_date, '%Y-%m') = '$current_month'";
+
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id DESC");
+        $cancel_data_count = mysqli_num_rows($sql_cancel_data);
+        $cancel_no_urut = 1;
+
+        /* Calculate Cancel Totals */
+        $cancel_total_price = 0;
+        $cancel_total_shipping = 0;
+        $cancel_temp_data = [];
+        while ($cancel_row = mysqli_fetch_assoc($sql_cancel_data)) {
+            $cancel_temp_data[] = $cancel_row;
+            $cancel_total_price += $cancel_row['price'];
+            $cancel_total_shipping += $cancel_row['shiping_cost'];
+        }
+        $sql_cancel_data = $cancel_temp_data;
    
         ?>
         <!-- Load Nav Header  -->
@@ -99,6 +134,7 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
@@ -121,10 +157,11 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $rows['cs_name'] ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-left"><?= $rows['seller_phone_no'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $price ; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $shiping_cost; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $rows['status_pickup']; ?></td>
@@ -142,10 +179,12 @@
                                                 } ?>
                                                 <?php if ($all_data > 0) { ?>
                                                 <tr class="bg-light text-bold">
-                                                    <td colspan="5" class="text-right py-2 fs-13">TOTAL:</td>
-                                                    <td class="text-center py-2 fs-13"><?= $total_price ?></td>
-                                                    <td class="text-center py-2 fs-13"><?= $total_shipping ?></td>
-                                                    <td colspan="2"></td>
+                                                    <td colspan="5"></td>
+                                                    <td class="bg-gray text-right py-2 fs-13">TOTAL:</td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $total_price ?></td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $total_shipping ?></td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $total_price - $total_shipping ?></td>
+                                                    <!-- <td colspan=""></td> -->
                                                 </tr>
                                                 <?php } ?>
                                             </tbody>
@@ -164,6 +203,72 @@
                                     Kode Kurir Anda: <span class="mx-2 bg-white px-4"><?= $kode_kurir . ' - ' . $all_data ?></span>
                                 </div>
                             </div>
+
+                            <!-- Cancel Table for Current Month -->
+                            <div class="card card-danger rounded-md mt-3" style="border-top: 4px solid #DC3545;">
+                                <div class="card-body p-3">
+                                    <button class="btn btn-danger btn-block ls-1 text-semibold text-uppercase rounded-pill">TABEL CANCEL - <?= ['', 'JANUARI', 'FEBRUARI', 'MARET', 'APRIL', 'MEI', 'JUNI', 'JULI', 'AGUSTUS', 'SEPTEMBER', 'OKTOBER', 'NOVEMBER', 'DESEMBER'][date('n')] . ' ' . date('Y') ?></button>
+                                </div>
+
+                                <div class="card-body pt-1">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-borderless table-striped table-border-dark table-hover w-100 mb-0 pb-0">
+                                            <thead>
+                                                <tr class="bg-transparent bg-danger text-white lh-3 text-nowrap text-uppercase fs-12">
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-left" style="vertical-align: middle !important;">No Hp Seller</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <?php
+                                                if ($cancel_data_count <= 0) {
+                                                    echo '<tr>
+                                                        <td colspan="8" class="text-center fs-12">No Cancelled Records Found</td>
+                                                    </tr>';
+                                                } else {
+                                                    foreach ($sql_cancel_data as $cancel_rows) {
+                                                        $cancel_price = $cancel_rows['price'];
+                                                        $cancel_shipping_cost = $cancel_rows['shiping_cost'];
+                                                ?>
+                                                        <tr class="fs-13 text-dark hover-light text-nowrap">
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['pickup_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $cancel_rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $cancel_rows['seller_phone_no'] ?></a></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_price; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_shipping_cost; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_pickup']; ?></td>
+                                                        </tr>
+                                                <?php }
+                                                } ?>
+                                                <?php if ($cancel_data_count > 0) { ?>
+                                                    <tr class="bg-light text-bold">
+                                                        <td colspan="5"></td>
+                                                        <td class="bg-gray text-right py-2 fs-13">TOTAL CANCEL:</td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price - $cancel_total_shipping ?></td>
+                                                    </tr>
+                                                <?php } ?>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <?php if ($cancel_data_count > 0) { ?>
+                                        <div class="d-inline-block float-left mt-3 fs-13">
+                                            <?= 'Total ' . $cancel_data_count . ' cancelled entries for ' . date('F Y') ?>
+                                        </div>
+                                    <?php } ?>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-3">
                             <div class="card card-primary rounded-md" style="border-top: 4px solid #263D57;">
@@ -179,15 +284,7 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <!-- <input type="hidden" name="kurir_id" value="<?= $data_kurir['id'] ?>"> -->
-                                        <div class="form-group mb-3">
-                                            <select name="kurir_id" class="form-control rounded-sm select2bs4" required>
-                                                <option value="">PILIH KURIR</option>
-                                                <?php foreach ($query_kurir as $val_kurir) { ?>
-                                                    <option value="<?= $val_kurir['id'] ?>" <?=$val_kurir['id'] === $data_kurir['id'] ? "selected" : "" ?>><?= strtoupper($val_kurir['kurir_name']) ?></option>
-                                                <?php } ?>
-                                            </select>
-                                        </div>
+                                        <input type="hidden" name="kurir_id" value="<?= $data_kurir['id'] ?>">
                                         <div class="form-group mb-3">
                                             <input type="text" name="cs_name" class="form-control ls1 fs-13 px-3 h-50 py-2 rounded-sm text-semibold" maxlength="100" placeholder="Nama CS" autofocus required>
                                         </div>

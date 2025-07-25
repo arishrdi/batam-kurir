@@ -125,32 +125,7 @@
                             </table>
                         </form>
                     </div>
-                    <div class="row mt-3 mb-0">
-                        <div class="col-lg-4 px-4">
-                            <div class="small-box bg-success rounded-sm shadow-sm">
-                                <div class="inner p-4 text-center">
-                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($sum_price, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Harga Paket</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 px-4">
-                            <div class="small-box bg-orange rounded-sm shadow-sm">
-                                <div class="inner p-4 text-center">
-                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($sum_cost, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Ongkir</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-lg-4 px-4">
-                            <div class="small-box bg-primary rounded-sm shadow-sm">
-                                <div class="inner p-4 text-center">
-                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($sum_price_cost, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Total</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
             <!-- Main content -->
@@ -217,10 +192,10 @@
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top  : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_cost_top   : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top - $jumlah_cost_top   : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -284,10 +259,10 @@
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_price_pending : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_cost_pending : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_pending > 0) ? $jumlah_price_pending - $jumlah_cost_pending : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -351,10 +326,10 @@
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_cost_cancel : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel - $jumlah_cost_cancel : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>
@@ -418,10 +393,10 @@
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
                                             <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">JUMLAH : </th>
+                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_price_no_delivery : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_cost_no_delivery : 0); ?></th>
-                                            <th></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_no_delivery > 0) ? $jumlah_price_no_delivery - $jumlah_cost_no_delivery : 0); ?></th>
                                         </tr>
                                     </tfoot>
                                 </table>

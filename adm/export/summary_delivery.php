@@ -309,14 +309,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         if($all_data_top > 0) {
             $jumlah_price_top = array_sum($array_sum_price_top);
             $jumlah_cost_top = array_sum($array_sum_cost_top);
+            $jumlah_difference_top = $jumlah_price_top - $jumlah_cost_top;
             
-            $sheet->setCellValue('G'.$row_data, 'JUMLAH:');
+            $sheet->setCellValue('G'.$row_data, 'TOTAL:');
             $sheet->setCellValue('H'.$row_data, $jumlah_price_top);
             $sheet->setCellValue('I'.$row_data, $jumlah_cost_top);
+            $sheet->setCellValue('J'.$row_data, $jumlah_difference_top);
             
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
         $row_data += 3;
 
@@ -372,14 +375,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         if($all_data_pending > 0) {
             $jumlah_price_pending = array_sum($array_sum_price_pending);
             $jumlah_cost_pending = array_sum($array_sum_cost_pending);
+            $jumlah_difference_pending = $jumlah_price_pending - $jumlah_cost_pending;
             
             $sheet->setCellValue('G'.$row_data, 'JUMLAH:');
             $sheet->setCellValue('H'.$row_data, $jumlah_price_pending);
             $sheet->setCellValue('I'.$row_data, $jumlah_cost_pending);
+            $sheet->setCellValue('J'.$row_data, $jumlah_difference_pending);
             
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
         $row_data += 3;
 
@@ -435,14 +441,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         if($all_data_cancel > 0) {
             $jumlah_price_cancel = array_sum($array_sum_price_cancel);
             $jumlah_cost_cancel = array_sum($array_sum_cost_cancel);
+            $jumlah_difference_cancel = $jumlah_price_cancel - $jumlah_cost_cancel;
             
             $sheet->setCellValue('G'.$row_data, 'JUMLAH:');
             $sheet->setCellValue('H'.$row_data, $jumlah_price_cancel);
             $sheet->setCellValue('I'.$row_data, $jumlah_cost_cancel);
+            $sheet->setCellValue('J'.$row_data, $jumlah_difference_cancel);
             
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
         $row_data += 3;
 
@@ -498,14 +507,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         if($all_data_no_delivery > 0) {
             $jumlah_price_no_delivery = array_sum($array_sum_price_no_delivery);
             $jumlah_cost_no_delivery = array_sum($array_sum_cost_no_delivery);
+            $jumlah_difference_no_delivery = $jumlah_price_no_delivery - $jumlah_cost_no_delivery;
             
             $sheet->setCellValue('G'.$row_data, 'JUMLAH:');
             $sheet->setCellValue('H'.$row_data, $jumlah_price_no_delivery);
             $sheet->setCellValue('I'.$row_data, $jumlah_cost_no_delivery);
+            $sheet->setCellValue('J'.$row_data, $jumlah_difference_no_delivery);
             
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
     /* End All Tables */
 

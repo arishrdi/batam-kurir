@@ -259,6 +259,7 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12 ">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
+                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
@@ -285,6 +286,7 @@
     ?>
             <tr class="fs-13 text-dark hover-light text-nowrap">
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['delivery_id'] ?></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_pick_up'] ?></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_delivery'] ?></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
@@ -323,7 +325,7 @@
                                         });
                                     }
                                     setTimeout(function(){
-                                        window.location.href='delivery.php'+payload;
+                                        window.location.reload();
                                     }, 1500);
                                 }
                             })
@@ -340,10 +342,11 @@
         <!-- Total Row for Main Delivery Table -->
         <?php if ($all_data > 0) { ?>
         <tr class="bg-light text-bold">
-            <td colspan="6" class="text-right py-2 fs-13">TOTAL DELIVERY:</td>
-            <td class="text-center py-2 fs-13"><?= $main_total_price ?></td>
-            <td class="text-center py-2 fs-13"><?= $main_total_shipping ?></td>
-            <td colspan="2"></td>
+            <td colspan="6"></td>
+            <td class="bg-gray text-right py-2 fs-13">TOTAL DELIVERY:</td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price ?></td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $main_total_shipping ?></td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price - $main_total_shipping ?></td>
         </tr>
         <?php } ?>
         
@@ -416,10 +419,11 @@
                                                 } ?>
                                                 <?php if ($pending_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="6" class="text-right py-2 fs-13">TOTAL PENDING:</td>
-                                                        <td class="text-center py-2 fs-13"><?= $pending_total_price ?></td>
-                                                        <td class="text-center py-2 fs-13"><?= $pending_total_shipping ?></td>
-                                                        <td></td>
+                                                        <td colspan="5"></td>
+                                                        <td class="bg-gray text-right py-2 fs-13">TOTAL PENDING:</td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $pending_total_price ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $pending_total_shipping ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $pending_total_price - $pending_total_shipping ?></td>
                                                     </tr>
                                                 <?php } ?>
                                             </tbody>
@@ -483,10 +487,11 @@
                                                 } ?>
                                                 <?php if ($cancel_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="6" class="text-right py-2 fs-13">TOTAL CANCEL:</td>
-                                                        <td class="text-center py-2 fs-13"><?= $cancel_total_price ?></td>
-                                                        <td class="text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
-                                                        <td></td>
+                                                        <td colspan="5"></td>
+                                                        <td class="bg-gray text-right py-2 fs-13">TOTAL CANCEL:</td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
+                                                        <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price - $cancel_total_shipping ?></td>
                                                     </tr>
                                                 <?php } ?>
                                             </tbody>
