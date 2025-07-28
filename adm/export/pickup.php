@@ -80,7 +80,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
     /* Jika Pencarian Aktif */
 
     /* Query Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
         
         /* Calculate Totals */
@@ -101,7 +101,11 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 dlv_pickup.pickup_date,
                 dlv_pickup.resi_code,
                 dlv_pickup.kurir_id,
-                mst_kurir.kurir_name,
+                mst_kurir.kurir_name AS pickup_kurir_name,
+                CASE
+                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                    ELSE '-'
+                END AS delivery_kurir_name,
                 dlv_pickup.cs_name,
                 CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
@@ -110,6 +114,8 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 dlv_pickup.date_created
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
             WHERE dlv_pickup.status_pickup='CANCEL' 
                 AND DATE_FORMAT(dlv_pickup.pickup_date, '%Y-%m') = '$current_month'";
         
@@ -356,7 +362,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
 
             $sheet->setCellValue($col_first.$row_data, $cancel_urut++);
             $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['pickup_id']);
-            $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['kurir_name']));
+            $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['delivery_kurir_name']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($cancel_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($cancel_data['cs_name']));
             $sheet->setCellValue(get_col($col_first, 5).$row_data, $cancel_price);

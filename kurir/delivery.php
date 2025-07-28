@@ -252,7 +252,49 @@
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $price; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $shiping_cost; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $status_delivery?></td>
+                                                            <!-- <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $status_delivery?></td> -->
+                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase">
+                                                                <select name="status_delivery" id="status_delivery<?= $rows['delivery_id']; ?>" <?= ($status_delivery == 'SUKSES') ? 'disabled' : (($status_delivery == 'CANCEL') ? 'disabled' : '') ?> onchange="
+                                                                    var status_delivery = $(this).val();
+                                                                    var date_search = $('#date_search').val();
+                                                                    $('#delivery_id').val(<?= $rows['delivery_id']; ?>);
+                                                                    $('#status_delivery').val(status_delivery);
+                                                                    if(status_delivery == '<?= $status_delivery ?>'){ // Kosongkan Form
+                                                                        $('#delivery_id').val(null);
+                                                                        $('#status_delivery').val(null);
+                                                                    }else{ // Update Status Delivery
+                                                                        var formData = $('#form-update-pickup').serialize(); // Mengambil data formulir
+                                                                        $.ajax({
+                                                                            url: 'proses/update/delivery.php',
+                                                                            type: 'POST', 
+                                                                            data: formData,
+                                                                            success: function(data) {
+                                                                                if(data == 'Y') {
+                                                                                    Toast.fire({  
+                                                                                        icon: 'success',
+                                                                                        title: 'Change Status Success', 
+                                                                                        text: 'Status Delivery berhasil diperbarui',
+                                                                                    });
+                                                                                }else {
+                                                                                    Toast.fire({
+                                                                                        icon: 'error',
+                                                                                        title: 'Change Status Failed',
+                                                                                        text: 'Tidak dapat memperbarui Status Delivery',
+                                                                                    });
+                                                                                }
+                                                                                setTimeout(function(){
+                                                                                    // window.location.href='delivery.php?date='+date_search;
+                                                                                    window.location.reload();
+                                                                                }, 1500);
+                                                                            }
+                                                                        })
+                                                                    }" class="form-control custom-select rounded-sm fs-13 py-1 border-0 h-75" required>
+                                                                    <option <?= ($status_delivery == 'PROSES') ? 'selected' : '' ?> value="PROSES">PROSES</option>
+                                                                    <option <?= ($status_delivery == 'PENDING') ? 'selected' : '' ?> value="PENDING">PENDING</option>
+                                                                    <option <?= ($status_delivery == 'SUKSES') ? 'selected' : '' ?> value="SUKSES">SUKSES</option>
+                                                                    <option <?= ($status_delivery == 'CANCEL') ? 'selected' : '' ?> value="CANCEL">CANCEL</option>
+                                                                </select>
+                                                            </td>
                                                         </tr>
                                                     <?php } ?>
                                                     <!-- Hidden form for AJAX -->

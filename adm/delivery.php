@@ -85,13 +85,23 @@
         /* Calculate Main Table Totals */
         $main_total_price = 0;
         $main_total_shipping = 0;
+        $pending_summary_total = 0;
+        $cancel_summary_total = 0;
         $main_temp_data = [];
         while ($main_row = mysqli_fetch_assoc($sql_data)) {
             $main_temp_data[] = $main_row;
             $main_total_price += $main_row['price'];
             $main_total_shipping += $main_row['shiping_cost'];
+            
+            // Calculate totals by status for summary
+            if ($main_row['status_delivery'] == 'PENDING') {
+                $pending_summary_total += $main_row['price'];
+            } elseif ($main_row['status_delivery'] == 'CANCEL') {
+                $cancel_summary_total += $main_row['price'];
+            }
         }
         $sql_data = $main_temp_data;
+        $total_delivery_summary = $main_total_price - $pending_summary_total - $cancel_summary_total;
 
         /* Pending Table Data - Today - Show latest delivery attempt per pickup */
         $today = date('Y-m-d');
@@ -112,6 +122,7 @@
                 END AS kurir_delivery,
                 dlv_pickup.resi_code,
                 dlv_pickup.cs_name,
+                dlv_pickup.seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
                 trx_delivery.status_delivery
@@ -155,6 +166,7 @@
                 END AS kurir_delivery,
                 dlv_pickup.resi_code,
                 dlv_pickup.cs_name,
+                dlv_pickup.seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
                 trx_delivery.status_delivery
@@ -342,11 +354,23 @@
         <!-- Total Row for Main Delivery Table -->
         <?php if ($all_data > 0) { ?>
         <tr class="bg-light text-bold">
-            <td colspan="6"></td>
-            <td class="bg-gray text-right py-2 fs-13">TOTAL DELIVERY:</td>
+            <td colspan="5" class="bg-gray text-center py-2 fs-13">TOTAL</td>
+            <td colspan="2" class="bg-gray text-right py-2 fs-13"></td>
             <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price ?></td>
             <td class="bg-gray text-center py-2 fs-13"><?= $main_total_shipping ?></td>
             <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price - $main_total_shipping ?></td>
+        </tr>
+        <tr class="bg-light text-bold">
+            <td colspan="4" class="bg-gray text-center py-2 fs-13">PENDING</td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $pending_summary_total ?></td>
+        </tr>
+        <tr class="bg-light text-bold">
+            <td colspan="4" class="bg-gray text-center py-2 fs-13">CANCEL</td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $cancel_summary_total ?></td>
+        </tr>
+        <tr class="bg-light text-bold">
+            <td colspan="4" class="bg-gray text-center py-2 fs-13">TOTAL DELIVERY</td>
+            <td class="bg-gray text-center py-2 fs-13"><?= $total_delivery_summary ?></td>
         </tr>
         <?php } ?>
         
@@ -388,6 +412,7 @@
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-left" style="vertical-align: middle !important;">No HP Seller</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
@@ -411,6 +436,7 @@
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['cs_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $pending_rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $pending_rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $pending_price; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $pending_shipping_cost; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $pending_rows['status_delivery']; ?></td>
@@ -419,7 +445,7 @@
                                                 } ?>
                                                 <?php if ($pending_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="5"></td>
+                                                        <td colspan="6"></td>
                                                         <td class="bg-gray text-right py-2 fs-13">TOTAL PENDING:</td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $pending_total_price ?></td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $pending_total_shipping ?></td>
@@ -456,6 +482,7 @@
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Nama CS</th>
+                                                    <th class="py-0 lh-5 text-left" style="vertical-align: middle !important;">No hp seller</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Harga</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Ongkir</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Keterangan</th>
@@ -479,6 +506,7 @@
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $cancel_rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $cancel_rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_price; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_shipping_cost; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_delivery']; ?></td>
@@ -487,7 +515,7 @@
                                                 } ?>
                                                 <?php if ($cancel_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="5"></td>
+                                                        <td colspan="6"></td>
                                                         <td class="bg-gray text-right py-2 fs-13">TOTAL CANCEL:</td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price ?></td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
