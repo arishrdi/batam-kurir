@@ -68,13 +68,23 @@
         /* Calculate Main Table Totals */
         $main_total_price = 0;
         $main_total_shipping = 0;
+        $pending_summary_total = 0;
+        $cancel_summary_total = 0;
         $main_temp_data = [];
         while ($main_row = mysqli_fetch_assoc($sql_data)) {
             $main_temp_data[] = $main_row;
             $main_total_price += $main_row['price'];
             $main_total_shipping += $main_row['shiping_cost'];
+            
+            // Calculate totals by status for summary
+            if ($main_row['status_delivery'] == 'PENDING') {
+                $pending_summary_total += $main_row['price'];
+            } elseif ($main_row['status_delivery'] == 'CANCEL') {
+                $cancel_summary_total += $main_row['price'];
+            }
         }
         $sql_data = $main_temp_data;
+        $total_delivery_summary = $main_total_price - $pending_summary_total - $cancel_summary_total;
 
         /* Pending Table Data - Today for this kurir */
         $today = date('Y-m-d');
@@ -244,7 +254,7 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_pick_up'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
@@ -304,14 +314,27 @@
                                                     </form>
                                                     <!-- End Hidden form -->
                                                 <?php } ?>
+                                                <!-- Total Row for Main Delivery Table -->
                                                 <?php if ($all_data > 0) { ?>
-                                                    <tr class="bg-light text-bold">
-                                                        <td colspan="6"></td>
-                                                        <td class="bg-gray text-right py-2 fs-13">TOTAL:</td>
-                                                        <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price ?></td>
-                                                        <td class="bg-gray text-center py-2 fs-13"><?= $main_total_shipping ?></td>
-                                                        <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price - $main_total_shipping ?></td>
-                                                    </tr>
+                                                <tr class="bg-light text-bold">
+                                                    <td colspan="5" class="bg-gray text-center py-2 fs-13">TOTAL</td>
+                                                    <td colspan="2" class="bg-gray text-right py-2 fs-13"></td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price ?></td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $main_total_shipping ?></td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $main_total_price - $main_total_shipping ?></td>
+                                                </tr>
+                                                <tr class="bg-light text-bold">
+                                                    <td colspan="4" class="bg-gray text-center py-2 fs-13">PENDING</td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $pending_summary_total ?></td>
+                                                </tr>
+                                                <tr class="bg-light text-bold">
+                                                    <td colspan="4" class="bg-gray text-center py-2 fs-13">CANCEL</td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $cancel_summary_total ?></td>
+                                                </tr>
+                                                <tr class="bg-light text-bold">
+                                                    <td colspan="4" class="bg-gray text-center py-2 fs-13">TOTAL DELIVERY</td>
+                                                    <td class="bg-gray text-center py-2 fs-13"><?= $total_delivery_summary ?></td>
+                                                </tr>
                                                 <?php } ?>
                                             </tbody>
                                         </table>
@@ -362,7 +385,7 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_no_urut++ . '.'; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_pick_up'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['resi_code'] ?></td>
@@ -432,7 +455,7 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_pick_up'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>

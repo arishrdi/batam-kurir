@@ -132,7 +132,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
-                                            <th colspan="5"></th>
+                                            <th colspan="6"></th>
                                             <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAl : </th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_price : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data > 0) ? $jumlah_cost : 0); ?></th>

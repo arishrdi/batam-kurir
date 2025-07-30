@@ -214,23 +214,23 @@ include 'theme/main_header.php'; ?>
                             <div class="small-box bg-success rounded-sm shadow-sm">
                                 <div class="inner p-4 text-center">
                                     <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($all_price_sum - $all_cost_sum, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Harga Talangan</p>
+                                    <p class="my-0 text-white text-semibold fs-14 text-uppercase">Harga</p>
                                 </div>
                             </div>
                         </div>
                         <div class="col-lg-4 px-4">
                             <div class="small-box bg-orange rounded-sm shadow-sm">
                                 <div class="inner p-4 text-center">
-                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($sum_cost, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Ongkir</p>
+                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($all_cost_sum, 0, ",", "."); ?></h3>
+                                    <p class="my-0 text-white text-semibold fs-14 text-uppercase">Ongkir</p>
                                 </div>
                             </div>
                         </div>
                         <div class="col-lg-4 px-4">
                             <div class="small-box bg-primary rounded-sm shadow-sm">
                                 <div class="inner p-4 text-center">
-                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($sum_price_cost, 0, ",", "."); ?></h3>
-                                    <p class="my-0 text-white text-semibold fs-14">Total</p>
+                                    <h3 class="text-white mb-0 lh-4 py-3"><?= number_format($all_price_sum, 0, ",", "."); ?></h3>
+                                    <p class="my-0 text-white text-semibold fs-14 text-uppercase">Total</p>
                                 </div>
                             </div>
                         </div>

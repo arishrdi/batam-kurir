@@ -73,6 +73,22 @@
             $all_data_cancel    = mysqli_num_rows($sql_cancel);
             $no_urut_cancel     = 1;
 
+            // Calculate pending and cancel price sums
+            $pending_price_sum = 0;
+            $cancel_price_sum = 0;
+            if ($sql_pending && $all_data_pending > 0) {
+                foreach($sql_pending as $row_pending) {
+                    $pending_price_sum += $row_pending['price'];
+                }
+                mysqli_data_seek($sql_pending, 0);
+            }
+            if ($sql_cancel && $all_data_cancel > 0) {
+                foreach($sql_cancel as $row_cancel) {
+                    $cancel_price_sum += $row_cancel['price'];
+                }
+                mysqli_data_seek($sql_cancel, 0);
+            }
+
             $query_no_delivery  = "SELECT
                 dlv_pickup.id AS pickup_id,
                 dlv_pickup.pickup_date,
@@ -191,11 +207,23 @@
                                     </tbody>
                                     <tfoot>
                                         <tr class="bg-transparent text-white lh-3 text-nowrap text-uppercase fs-12">
-                                            <th colspan="5"></th>
-                                            <th class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
+                                            <th colspan="4" class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;">TOTAL : </th>
+                                            <th colspan="2" class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;"></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top  : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_cost_top   : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top - $jumlah_cost_top   : 0); ?></th>
+                                        </tr>
+                                         <tr class="bg-light text-bold">
+                                            <td colspan="4" class="bg-gray text-center py-2 fs-13">PENDING</td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= $pending_price_sum ?></td>
+                                        </tr>
+                                        <tr class="bg-light text-bold">
+                                            <td colspan="4" class="bg-gray text-center py-2 fs-13">CANCEL</td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= $cancel_price_sum ?></td>
+                                        </tr>
+                                        <tr class="bg-light text-bold">
+                                            <td colspan="4" class="bg-gray text-center py-2 fs-13">TOTAL DELIVERY</td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_top > 0) ? $jumlah_price_top - $pending_price_sum - $cancel_price_sum : 0) ?></td>
                                         </tr>
                                     </tfoot>
                                 </table>

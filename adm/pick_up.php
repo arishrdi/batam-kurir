@@ -58,7 +58,7 @@
         }
 
         /* Menampilkan Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC, dlv_pickup.id ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
@@ -89,16 +89,21 @@
                 CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                dlv_pickup.status_pickup,
+                trx_delivery.status_delivery,
                 dlv_pickup.date_created
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
                     AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE dlv_pickup.status_pickup='CANCEL' 
-                AND DATE_FORMAT(dlv_pickup.pickup_date, '%Y-%m') = '$current_month'";
+            WHERE trx_delivery.status_delivery='CANCEL' 
+                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'";
 
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id DESC");
+        /* Apply kurir filter to cancel table based on delivery kurir if active */
+        if ($_GET['kurir'] ?? "" != "") {
+            $query_cancel = $query_cancel . " AND trx_delivery.kurir_id='$kurir_id'";
+        }
+
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY delivery_kurir_name ASC, dlv_pickup.id ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
         $cancel_no_urut = 1;
 
@@ -326,7 +331,7 @@
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $cancel_rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $cancel_rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_price; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_shipping_cost; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_pickup']; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_delivery']; ?></td>
                                                         </tr>
                                                 <?php }
                                                 } ?>

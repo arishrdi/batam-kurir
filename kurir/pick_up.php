@@ -77,20 +77,26 @@
                 dlv_pickup.pickup_date,
                 dlv_pickup.resi_code,
                 dlv_pickup.kurir_id,
-                mst_kurir.kurir_name,
+                mst_kurir.kurir_name AS pickup_kurir_name,
+                CASE
+                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                    ELSE '-'
+                END AS delivery_kurir_name,
                 dlv_pickup.cs_name,
                 CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                dlv_pickup.status_pickup,
+                trx_delivery.status_delivery,
                 dlv_pickup.date_created
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-            WHERE dlv_pickup.status_pickup='CANCEL' 
-                AND dlv_pickup.kurir_id={$data_kurir['id']}
-                AND DATE_FORMAT(dlv_pickup.pickup_date, '%Y-%m') = '$current_month'";
+                JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+            WHERE trx_delivery.status_delivery='CANCEL' 
+                AND trx_delivery.kurir_id={$data_kurir['id']}
+                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'";
 
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id DESC");
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY delivery_kurir_name ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
         $cancel_no_urut = 1;
 
@@ -240,13 +246,13 @@
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['pickup_id'] ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_name'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-left"><a href="https://wa.me/<?= $cancel_rows['seller_phone_no'] ?>" target="_blank" rel="noopener noreferrer"><?= $cancel_rows['seller_phone_no'] ?></a></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_price; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap"><?= $cancel_shipping_cost; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_pickup']; ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center text-nowrap text-uppercase"><?= $cancel_rows['status_delivery']; ?></td>
                                                         </tr>
                                                 <?php }
                                                 } ?>

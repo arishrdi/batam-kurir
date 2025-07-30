@@ -420,7 +420,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $pending_urut = 1;
         foreach($sql_pending_data as $pending_data){
             $sheet->setCellValue($col_first.$row_data, $pending_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $pending_data['delivery_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $pending_data['pickup_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($pending_data['kurir_pick_up']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($pending_data['kurir_delivery']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($pending_data['resi_code']));
@@ -472,7 +472,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $cancel_urut = 1;
         foreach($sql_cancel_data as $cancel_data){
             $sheet->setCellValue($col_first.$row_data, $cancel_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['delivery_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['pickup_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['kurir_pick_up']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($cancel_data['kurir_delivery']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($cancel_data['resi_code']));
