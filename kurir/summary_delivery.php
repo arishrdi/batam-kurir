@@ -41,49 +41,66 @@
             $query_data         .= ($_GET['from'] ?? "") != "" && ($_GET['to'] ?? "") != "" ? " AND trx_delivery.delivery_date BETWEEN '$date_from' AND '$date_to'" : " AND trx_delivery.delivery_date='$date_now'";
         /* Jika Pencarian Aktif */
         
-        /* Menampilkan Data */
-            $sql_top            = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='SUKSES' ORDER BY trx_delivery.id ASC");
-            $all_data_top       = mysqli_num_rows($sql_top);
-            $no_urut_top        = 1;
-            $array_sumprice[]       = 0;
-            $array_sumcost[]        = 0;
-            $array_sumtotal_price[] = 0;
-            foreach($sql_top as $row){
-                $pricetop              = $row['price'];
-                $shipingcost_top       = $row['shiping_cost'];
-                $totalprice_top        = $row['price']+$row['shiping_cost'];
+        /* Menampilkan Data - Show all delivery statuses */
+        $sql_top = mysqli_query($con, "$query_data ORDER BY trx_delivery.id ASC");
+        
+        $all_data_top = ($sql_top) ? mysqli_num_rows($sql_top) : 0;
+        $no_urut_top = 1;
+        $array_sumprice = [];
+        $array_sumcost = [];
+        $array_sumtotal_price = [];
+        if ($sql_top && $all_data_top > 0) {
+            while($row = mysqli_fetch_assoc($sql_top)) {
+                // Only include SUKSES deliveries in summary totals
+                if ($row['status_delivery'] == 'SUKSES') {
+                    $pricetop = $row['price'];
+                    $shipingcost_top = $row['shiping_cost'];
+                    $totalprice_top = $row['price'] + $row['shiping_cost'];
 
-                $array_sumprice[]       = $pricetop;
-                $array_sumcost[]        = $shipingcost_top;
-                $array_sumtotal_price[] = $totalprice_top;
-            }
-            $sum_price          = (($all_data_top > 0) ? array_sum($array_sumprice) : 0);
-            $sum_cost           = (($all_data_top > 0) ? array_sum($array_sumcost) : 0);
-            $sum_price_cost     = (($all_data_top > 0) ? array_sum($array_sumtotal_price) : 0);
-
-            $sql_pending        = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY trx_delivery.id ASC");
-            $all_data_pending   = mysqli_num_rows($sql_pending);
-            $no_urut_pending    = 1;
-            
-            $sql_cancel         = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY trx_delivery.id ASC");
-            $all_data_cancel    = mysqli_num_rows($sql_cancel);
-            $no_urut_cancel     = 1;
-
-            // Calculate pending and cancel price sums
-            $pending_price_sum = 0;
-            $cancel_price_sum = 0;
-            if ($sql_pending && $all_data_pending > 0) {
-                foreach($sql_pending as $row_pending) {
-                    $pending_price_sum += $row_pending['price'];
+                    $array_sumprice[] = $pricetop;
+                    $array_sumcost[] = $shipingcost_top;
+                    $array_sumtotal_price[] = $totalprice_top;
                 }
-                mysqli_data_seek($sql_pending, 0);
             }
-            if ($sql_cancel && $all_data_cancel > 0) {
-                foreach($sql_cancel as $row_cancel) {
-                    $cancel_price_sum += $row_cancel['price'];
-                }
-                mysqli_data_seek($sql_cancel, 0);
+            mysqli_data_seek($sql_top, 0); // Reset pointer for later use
+        }
+        $sum_price = array_sum($array_sumprice);
+        $sum_cost = array_sum($array_sumcost);
+        $sum_price_cost = array_sum($array_sumtotal_price);
+
+        // Calculate totals for ALL deliveries (not just SUKSES) to match table footer
+        $all_price_sum = 0;
+        $all_cost_sum = 0;
+        mysqli_data_seek($sql_top, 0); // Reset pointer
+        while($row_all = mysqli_fetch_assoc($sql_top)) {
+            $all_price_sum += $row_all['price'];
+            $all_cost_sum += $row_all['shiping_cost'];
+        }
+        mysqli_data_seek($sql_top, 0); // Reset pointer for later use
+
+        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY trx_delivery.id ASC");
+        $all_data_pending = ($sql_pending) ? mysqli_num_rows($sql_pending) : 0;
+        $no_urut_pending = 1;
+        
+        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY trx_delivery.id ASC");
+        $all_data_cancel = ($sql_cancel) ? mysqli_num_rows($sql_cancel) : 0;
+        $no_urut_cancel = 1;
+
+        // Calculate pending and cancel price sums
+        $pending_price_sum = 0;
+        $cancel_price_sum = 0;
+        if ($sql_pending && $all_data_pending > 0) {
+            while($row_pending = mysqli_fetch_assoc($sql_pending)) {
+                $pending_price_sum += $row_pending['price'];
             }
+            mysqli_data_seek($sql_pending, 0);
+        }
+        if ($sql_cancel && $all_data_cancel > 0) {
+            while($row_cancel = mysqli_fetch_assoc($sql_cancel)) {
+                $cancel_price_sum += $row_cancel['price'];
+            }
+            mysqli_data_seek($sql_cancel, 0);
+        }
 
             $query_no_delivery  = "SELECT
                 dlv_pickup.id AS pickup_id,
@@ -177,22 +194,29 @@
                                         <?php
                                         $array_sum_price_top[]          = 0;
                                         $array_sum_cost_top[]           = 0;
+                                        $array_sum_total_price_top[]    = 0;
                                         if ($all_data_top <= 0) {
                                             echo '<tr>
                                                 <td colspan="9" class="text-center fs-12">Record Not Found</td>
                                             </tr>';
                                         } else {
                                             foreach ($sql_top as $row_top) {
-                                                // $paket_status               = $row_top['paket_status'];
                                                 $price_top                  = $row_top['price'];
                                                 $shiping_cost_top           = $row_top['shiping_cost'];
-
-                                                // if ($paket_status == 'FULL LUNAS') {
-                                                //     $array_sum_price_top[]  = -$row_top['shiping_cost'];
-                                                // }
+                                                $total_price_top            = $row_top['price']+$row_top['shiping_cost'];
                                                 
                                                 $array_sum_price_top[]      = $row_top['price'];
                                                 $array_sum_cost_top[]       = $row_top['shiping_cost'];
+                                                $array_sum_total_price_top[]= $total_price_top;
+                                                
+                                                // Color coding based on status
+                                                $status_class = '';
+                                                switch($row_top['status_delivery']) {
+                                                    case 'SUKSES': $status_class = 'text-success'; break;
+                                                    case 'PENDING': $status_class = 'text-warning'; break;
+                                                    case 'CANCEL': $status_class = 'text-danger'; break;
+                                                    case 'PROSES': $status_class = 'text-info'; break;
+                                                }
                                                 ?>
                                                 <tr class="fs-13 text-dark hover-light">
                                                     <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut_top++. '.'; ?></td>
@@ -208,6 +232,7 @@
                                             <?php }
                                             $jumlah_price_top   = array_sum($array_sum_price_top);
                                             $jumlah_cost_top    = array_sum($array_sum_cost_top);
+                                            $jumlah_total_top   = array_sum($array_sum_total_price_top);
                                         }
                                         ?>
                                     </tbody>
@@ -217,19 +242,19 @@
                                             <th colspan="2" class="bg-gray text-right lh-3 py-2" style="vertical-align: middle !important;"></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top  : 0); ?></th>
                                             <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_cost_top   : 0); ?></th>
-                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top - $jumlah_cost_top   : 0); ?></th>
+                                            <th class="bg-gray text-center lh-3 py-2" style="vertical-align: middle !important;"><?= (($all_data_top > 0) ? $jumlah_price_top - $jumlah_cost_top : 0); ?></th>
                                         </tr>
                                          <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">PENDING</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_pending > 0) ? $jumlah_price_pending : 0) ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= $pending_price_sum ?></td>
                                         </tr>
                                         <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">CANCEL</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel : 0) ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= $cancel_price_sum ?></td>
                                         </tr>
                                         <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">TOTAL DELIVERY</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_top > 0) ? $jumlah_price_top - (($all_data_pending > 0) ? $jumlah_price_pending : 0) - (($all_data_cancel > 0) ? $jumlah_price_cancel : 0) : 0) ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_top > 0) ? $jumlah_price_top - $pending_price_sum - $cancel_price_sum : 0) ?></td>
                                         </tr>
                                     </tfoot>
                                 </table>
