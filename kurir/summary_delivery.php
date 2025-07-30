@@ -102,6 +102,10 @@
             mysqli_data_seek($sql_cancel, 0);
         }
 
+            // Independent date filter for no-delivery table
+            $no_delivery_from = ($_GET['no_delivery_from'] ?? "") != "" ? date('Y-m-d', strtotime($_GET['no_delivery_from'])) : date('Y-m-d', strtotime('-30 days'));
+            $no_delivery_to = ($_GET['no_delivery_to'] ?? "") != "" ? date('Y-m-d', strtotime($_GET['no_delivery_to'])) : date('Y-m-d');
+            
             $query_no_delivery  = "SELECT
                 dlv_pickup.id AS pickup_id,
                 dlv_pickup.pickup_date,
@@ -116,7 +120,7 @@
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
             WHERE dlv_pickup.kurir_id={$data_kurir['id']} 
                 AND trx_delivery.id IS NULL
-                AND dlv_pickup.pickup_date='$date_now'
+                AND dlv_pickup.pickup_date BETWEEN '$no_delivery_from' AND '$no_delivery_to'
             ORDER BY dlv_pickup.id ASC";
             
             $sql_no_delivery    = mysqli_query($con, $query_no_delivery);
@@ -397,9 +401,33 @@
                     </div>
 
                     <!-- Tabel Belum Input Kurir Delivery -->
-                    <div class="card card-primary rounded-md" style="border-top: 4px solid #263D57;">
+                    <div id="tabel-no-delivery" class="card card-primary rounded-md" style="border-top: 4px solid #263D57;">
                         <div class="card-body pt-1 pb-1">
                             <h5 class="text-bold text-gray mt-2 text-uppercase">Tabel Belum Input Kurir Delivery</h5>
+                        </div>
+                        <div class="card-body py-0">
+                            <form action="" class="table-responsive py-0">
+                                <table class="table table-borderless py-0 my-0 px-0">
+                                    <tr class="lh-2">
+                                        <td width="15%" class="px-0 py-0">
+                                            <div class="input-group-text border-0 fs-13 px-0 pr-3">Tanggal Pickup:</div>
+                                        </td>
+                                        <td width="15%" class="px-0 py-0">
+                                            <input type="date" name="no_delivery_from" value="<?= $no_delivery_from ?>" max="<?= date('Y-m-d'); ?>" required class="form-control h-75 bg-transparent px-3 my-auto rounded-sm fs-12">
+                                        </td>
+                                        <td width="5%" class="px-0 py-0">
+                                            <div class="input-group-text border-0"><div class="btn btn-transparent btn-block border-0 rounded-0 py-0"><i class="fas fa-minus"></i></div></div>
+                                        </td>
+                                        <td width="15%" class="px-0 py-0">
+                                            <input type="date" name="no_delivery_to" value="<?= $no_delivery_to ?>" max="<?= date('Y-m-d'); ?>" required class="form-control h-75 bg-transparent px-3 my-auto rounded-sm fs-12">
+                                        </td>
+                                        <td width="8%" class="px-2 py-0">
+                                            <button onclick="changeNoDeliveryPeriode(document.querySelector('input[name=no_delivery_from]').value, document.querySelector('input[name=no_delivery_to]').value)" type="button" class="btn h-50 btn-warning btn-block border-0 rounded-sm hover"><i class="fas fa-search"></i></button>
+                                        </td>
+                                        <td class="px-0 py-0"></td>
+                                    </tr>
+                                </table>
+                            </form>
                         </div>
                         <div class="card-body pt-1">
                             <div class="table-responsive">
@@ -474,6 +502,20 @@
     include 'theme/helper_search.php';
     ?>
     <!-- Load Dependency JS -->
+    
+    <script>
+        function changeNoDeliveryPeriode(from, to) {
+            if (from && to) {
+                const currentURL = new URL(window.location.href);
+                currentURL.searchParams.set('no_delivery_from', from);
+                currentURL.searchParams.set('no_delivery_to', to);
+                currentURL.hash = '#tabel-no-delivery';
+                window.location.href = currentURL.toString();
+            } else {
+                alert('Please select both start and end dates');
+            }
+        }
+    </script>
 </body>
 
 </html>
