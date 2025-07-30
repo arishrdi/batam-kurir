@@ -56,10 +56,6 @@
                 $array_sumprice[]       = $pricetop;
                 $array_sumcost[]        = $shipingcost_top;
                 $array_sumtotal_price[] = $totalprice_top;
-
-                $array_sumprice[]       = $pricetop;
-                $array_sumcost[]        = $shipingcost_top;
-                $array_sumtotal_price[] = $totalprice_top;
             }
             $sum_price          = (($all_data_top > 0) ? array_sum($array_sumprice) : 0);
             $sum_cost           = (($all_data_top > 0) ? array_sum($array_sumcost) : 0);
@@ -109,6 +105,16 @@
             $sql_no_delivery    = mysqli_query($con, $query_no_delivery);
             $all_data_no_delivery = mysqli_num_rows($sql_no_delivery);
             $no_urut_no_delivery = 1;
+
+            // Initialize all summary variables to avoid undefined variable errors
+            $jumlah_price_top = 0;
+            $jumlah_cost_top = 0;
+            $jumlah_price_pending = 0;
+            $jumlah_cost_pending = 0;
+            $jumlah_price_cancel = 0;
+            $jumlah_cost_cancel = 0;
+            $jumlah_price_no_delivery = 0;
+            $jumlah_cost_no_delivery = 0;
         /* Menampilkan Data */
         ?>
         <!-- Load Nav Header  -->
@@ -215,15 +221,15 @@
                                         </tr>
                                          <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">PENDING</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= $pending_price_sum ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_pending > 0) ? $jumlah_price_pending : 0) ?></td>
                                         </tr>
                                         <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">CANCEL</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= $cancel_price_sum ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_cancel > 0) ? $jumlah_price_cancel : 0) ?></td>
                                         </tr>
                                         <tr class="bg-light text-bold">
                                             <td colspan="4" class="bg-gray text-center py-2 fs-13">TOTAL DELIVERY</td>
-                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_top > 0) ? $jumlah_price_top - $pending_price_sum - $cancel_price_sum : 0) ?></td>
+                                            <td class="bg-gray text-center py-2 fs-13"><?= (($all_data_top > 0) ? $jumlah_price_top - (($all_data_pending > 0) ? $jumlah_price_pending : 0) - (($all_data_cancel > 0) ? $jumlah_price_cancel : 0) : 0) ?></td>
                                         </tr>
                                     </tfoot>
                                 </table>
