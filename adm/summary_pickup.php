@@ -56,7 +56,7 @@
         /* Jika Pencarian Aktif */
         
         /* Menampilkan Data */ 
-            $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC");
+            $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
             $all_data       = mysqli_num_rows($sql_data);
             $no_urut        = 1;
         /* Menampilkan Data */ 

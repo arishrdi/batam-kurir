@@ -55,7 +55,7 @@ include 'theme/main_header.php'; ?>
         /* Jika Pencarian Aktif */
         
         /* Menampilkan Data - Show all delivery statuses */
-        $sql_top = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC");
+        $sql_top = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         
         // if (!$sql_top) {
         //     die('SQL Error: ' . mysqli_error($con));
@@ -95,11 +95,11 @@ include 'theme/main_header.php'; ?>
         }
         mysqli_data_seek($sql_top, 0); // Reset pointer for later use
 
-        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY dlv_pickup.id ASC");
+        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         $all_data_pending = ($sql_pending) ? mysqli_num_rows($sql_pending) : 0;
         $no_urut_pending = 1;
         
-        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY dlv_pickup.id ASC");
+        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         $all_data_cancel = ($sql_cancel) ? mysqli_num_rows($sql_cancel) : 0;
         $no_urut_cancel = 1;
 

@@ -37,7 +37,7 @@
         // Menampilkan Data
         $query_all_data = mysqli_query($con, $query_data);
         $all_data       = mysqli_num_rows($query_all_data);
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         $no_urut        = 1;
         ?>
         <!-- Load Nav Header  -->
