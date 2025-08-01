@@ -49,7 +49,8 @@ include '../../config/local_date.php'; // Load Database Koneksi
             dlv_pickup.price,
             dlv_pickup.shiping_cost,
             dlv_pickup.status_pickup,
-            trx_delivery.status_delivery
+            trx_delivery.status_delivery,
+            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
         FROM dlv_pickup 
             JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
             LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -69,33 +70,50 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $query_data         .= ($_GET['from'] ?? "") != "" && ($_GET['to'] ?? "") != "" ? " AND trx_delivery.delivery_date BETWEEN '$date_from' AND '$date_to'" : " AND trx_delivery.delivery_date='$date_now'";
     /* Jika Pencarian Aktif */
     
-    /* Menampilkan Data */
-        $sql_top            = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='SUKSES' ORDER BY trx_delivery.id ASC");
-        $all_data_top       = mysqli_num_rows($sql_top);
-        $no_urut_top        = 1;
-        $array_sumprice[]       = 0;
-        $array_sumcost[]        = 0;
-        $array_sumtotal_price[] = 0;
-        foreach($sql_top as $row){
-            $pricetop              = $row['price'];
-            $shipingcost_top       = $row['shiping_cost'];
-            $totalprice_top        = $row['price']+$row['shiping_cost'];
-
-            $array_sumprice[]       = $pricetop;
-            $array_sumcost[]        = $shipingcost_top;
-            $array_sumtotal_price[] = $totalprice_top;
-        }
-        $sum_price          = (($all_data_top > 0) ? array_sum($array_sumprice) : 0);
-        $sum_cost           = (($all_data_top > 0) ? array_sum($array_sumcost) : 0);
-        $sum_price_cost     = (($all_data_top > 0) ? array_sum($array_sumtotal_price) : 0);
-
-        $sql_pending        = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY trx_delivery.id ASC");
-        $all_data_pending   = mysqli_num_rows($sql_pending);
-        $no_urut_pending    = 1;
+    /* Menampilkan Data - Show all delivery statuses */
+        $sql_top = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         
-        $sql_cancel         = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY trx_delivery.id ASC");
-        $all_data_cancel    = mysqli_num_rows($sql_cancel);
-        $no_urut_cancel     = 1;
+        $all_data_top = ($sql_top) ? mysqli_num_rows($sql_top) : 0;
+        $no_urut_top = 1;
+        $array_sumprice = [];
+        $array_sumcost = [];
+        $array_sumtotal_price = [];
+        if ($sql_top && $all_data_top > 0) {
+            while($row = mysqli_fetch_assoc($sql_top)) {
+                // Only include SUKSES deliveries in summary totals
+                if ($row['status_delivery'] == 'SUKSES') {
+                    $pricetop = $row['price'];
+                    $shipingcost_top = $row['shiping_cost'];
+                    $totalprice_top = $row['price'] + $row['shiping_cost'];
+
+                    $array_sumprice[] = $pricetop;
+                    $array_sumcost[] = $shipingcost_top;
+                    $array_sumtotal_price[] = $totalprice_top;
+                }
+            }
+            mysqli_data_seek($sql_top, 0); // Reset pointer for later use
+        }
+        $sum_price = array_sum($array_sumprice);
+        $sum_cost = array_sum($array_sumcost);
+        $sum_price_cost = array_sum($array_sumtotal_price);
+
+        // Calculate totals for ALL deliveries (not just SUKSES) to match table footer
+        $all_price_sum = 0;
+        $all_cost_sum = 0;
+        mysqli_data_seek($sql_top, 0); // Reset pointer
+        while($row_all = mysqli_fetch_assoc($sql_top)) {
+            $all_price_sum += $row_all['price'];
+            $all_cost_sum += $row_all['shiping_cost'];
+        }
+        mysqli_data_seek($sql_top, 0); // Reset pointer for later use
+
+        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $all_data_pending = ($sql_pending) ? mysqli_num_rows($sql_pending) : 0;
+        $no_urut_pending = 1;
+        
+        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $all_data_cancel = ($sql_cancel) ? mysqli_num_rows($sql_cancel) : 0;
+        $no_urut_cancel = 1;
 
         $query_no_delivery  = "SELECT
             dlv_pickup.id AS pickup_id,
@@ -522,11 +540,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
     /* End All Tables */
 
 /* Configuration Save File To Excel */
+    $filename = 'Data Summary Delivery.xlsx';
     $writer = new Xlsx($spreadsheet);
-    $writer->save('Data Summary Delivery.xlsx');
-    header('Content-type: application/xlsx');
-
-    header('Content-Disposition: attachment; filename="Data Summary Delivery.xlsx"'); // It will be called downloaded
-    readfile('Data Summary Delivery.xlsx'); // The PDF source is in original
+    $writer->save($filename);
+    
+    // Clear any previous output
+    if (ob_get_contents()) ob_clean();
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    readfile($filename);
+    unlink($filename); // Clean up temporary file
 /* Configuration Save File To Excel */
 ?>

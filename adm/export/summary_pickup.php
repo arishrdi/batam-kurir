@@ -44,7 +44,8 @@ include '../../config/local_date.php'; // Load Database Koneksi
             CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
             dlv_pickup.price,
             dlv_pickup.shiping_cost,
-            dlv_pickup.status_pickup
+            dlv_pickup.status_pickup,
+            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
         FROM dlv_pickup 
             JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
             LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -73,7 +74,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
     /* Jika Pencarian Aktif */
 
     /* Query Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
     /* Query Data */
 /* Get Data */ 
@@ -305,11 +306,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
 /* Body Content */
 
 /* Configuration Save File To Excel */
+    $filename = 'Data Summary Pick Up.xlsx';
     $writer = new Xlsx($spreadsheet);
-    $writer->save('Data Summary Pick Up.xlsx');
-    header('Content-type: application/xlsx');
-
-    header('Content-Disposition: attachment; filename="Data Summary Pick Up.xlsx"'); // It will be called downloaded
-    readfile('Data Summary Pick Up.xlsx'); // The PDF source is in original
+    $writer->save($filename);
+    
+    // Clear any previous output
+    if (ob_get_contents()) ob_clean();
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    readfile($filename);
+    unlink($filename); // Clean up temporary file
 /* Configuration Save File To Excel */
 ?>

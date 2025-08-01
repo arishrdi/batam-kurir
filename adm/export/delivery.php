@@ -52,7 +52,8 @@ include '../../config/local_date.php'; // Load Database Koneksi
             dlv_pickup.price,
             dlv_pickup.shiping_cost,
             dlv_pickup.status_pickup,
-            trx_delivery.status_delivery
+            trx_delivery.status_delivery,
+            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
         FROM dlv_pickup 
             JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
             LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -100,13 +101,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
         /* Calculate Main Table Totals */
         $main_total_price = 0;
         $main_total_shipping = 0;
+        $pending_summary_total = 0;
+        $cancel_summary_total = 0;
         $main_temp_data = [];
         while ($main_row = mysqli_fetch_assoc($sql_data)) {
             $main_temp_data[] = $main_row;
             $main_total_price += $main_row['price'];
             $main_total_shipping += $main_row['shiping_cost'];
+            
+            // Calculate totals by status for summary
+            if ($main_row['status_delivery'] == 'PENDING') {
+                $pending_summary_total += $main_row['price'];
+            } elseif ($main_row['status_delivery'] == 'CANCEL') {
+                $cancel_summary_total += $main_row['price'];
+            }
         }
         $sql_data = $main_temp_data;
+        $total_delivery_summary = $main_total_price - $pending_summary_total - $cancel_summary_total;
 
         /* Pending Table Data - Today - Show latest delivery attempt per pickup */
         $today = date('Y-m-d');
@@ -127,9 +138,11 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 END AS kurir_delivery,
                 dlv_pickup.resi_code,
                 dlv_pickup.cs_name,
+                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery
+                trx_delivery.status_delivery,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -169,9 +182,11 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 END AS kurir_delivery,
                 dlv_pickup.resi_code,
                 dlv_pickup.cs_name,
+                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery
+                trx_delivery.status_delivery,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -315,22 +330,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
     $sheet->setCellValue('B2', strtoupper('Data Delivery'));
     
     // Format Header Content
-        $spreadsheet->getActiveSheet()->mergeCells('B2:J2');
+        $spreadsheet->getActiveSheet()->mergeCells('B2:K2');
         $spreadsheet->getActiveSheet()->getStyle('B2')->applyFromArray($style_title);
-        $spreadsheet->getActiveSheet()->mergeCells('B3:J3');
+        $spreadsheet->getActiveSheet()->mergeCells('B3:K3');
     // Format Header Content
 /* Header Content */
 
 /* Body Content - Main Delivery Table */
     $sheet->setCellValue('B4', strtoupper('No'));
     $sheet->setCellValue('C4', strtoupper('ID'));
-    $sheet->setCellValue('D4', strtoupper('Kurir Pickup'));
+    $sheet->setCellValue('D4', strtoupper('Kurir Pick Up'));
     $sheet->setCellValue('E4', strtoupper('Kurir Delivery'));
     $sheet->setCellValue('F4', strtoupper('Kode Resi'));
     $sheet->setCellValue('G4', strtoupper('Nama CS'));
-    $sheet->setCellValue('H4', strtoupper('Harga'));
-    $sheet->setCellValue('I4', strtoupper('Ongkir'));
-    $sheet->setCellValue('J4', strtoupper('Keterangan'));
+    $sheet->setCellValue('H4', strtoupper('No Hp Seller'));
+    $sheet->setCellValue('I4', strtoupper('Harga'));
+    $sheet->setCellValue('J4', strtoupper('Ongkir'));
+    $sheet->setCellValue('K4', strtoupper('Keterangan'));
     
     /* Thead Set Style */
         $spreadsheet->getActiveSheet()->getColumnDimension('B')->setAutoSize(true);
@@ -342,6 +358,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getColumnDimension('H')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('I')->setAutoSize(true);
         $spreadsheet->getActiveSheet()->getColumnDimension('J')->setAutoSize(true);
+        $spreadsheet->getActiveSheet()->getColumnDimension('K')->setAutoSize(true);
 
         $spreadsheet->getActiveSheet()->getStyle('B4')->applyFromArray($style_thead);
         $spreadsheet->getActiveSheet()->getStyle('C4')->applyFromArray($style_thead_name);
@@ -352,6 +369,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $spreadsheet->getActiveSheet()->getStyle('H4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('I4')->applyFromArray($style_thead_name);
         $spreadsheet->getActiveSheet()->getStyle('J4')->applyFromArray($style_thead_name);
+        $spreadsheet->getActiveSheet()->getStyle('K4')->applyFromArray($style_thead_name);
     /* Thead Set Style */
     
     /* Main Delivery Table */
@@ -365,17 +383,18 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $shiping_cost = $val_data['shiping_cost'];
 
             $sheet->setCellValue($col_first.$row_data, $index);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['daily_sequence_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($val_data['kurir_pick_up']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($val_data['kurir_delivery']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($val_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 5).$row_data, strtoupper($val_data['cs_name']));
-            $sheet->setCellValue(get_col($col_first, 6).$row_data, $price);
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, $shiping_cost);
-            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($val_data['status_delivery']));
+            $sheet->setCellValueExplicit(get_col($col_first, 6).$row_data, $val_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue(get_col($col_first, 7).$row_data, $price);
+            $sheet->setCellValue(get_col($col_first, 8).$row_data, $shiping_cost);
+            $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($val_data['status_delivery']));
 
             // Apply styles
-            for($i = 0; $i <= 8; $i++) {
+            for($i = 0; $i <= 9; $i++) {
                 $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
             }
 
@@ -384,20 +403,22 @@ include '../../config/local_date.php'; // Load Database Koneksi
         
         // Add totals for main table
         if($all_data > 0) {
-            $sheet->setCellValue('G'.$row_data, 'TOTAL:');
-            $sheet->setCellValue('H'.$row_data, $main_total_price);
-            $sheet->setCellValue('I'.$row_data, $main_total_shipping);
+            $sheet->setCellValue('H'.$row_data, 'TOTAL:');
+            $sheet->setCellValue('I'.$row_data, $main_total_price);
+            $sheet->setCellValue('J'.$row_data, $main_total_shipping);
+            $sheet->setCellValue('K'.$row_data, $main_total_price - $main_total_shipping);
             
-            $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('K'.$row_data)->applyFromArray($style_thead);
             $row_data += 2;
         }
 
         /* Pending Table */
         $row_data += 2;
         $sheet->setCellValue('B'.$row_data, 'TABEL PENDING HARI INI');
-        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':J'.$row_data);
+        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':K'.$row_data);
         $spreadsheet->getActiveSheet()->getStyle('B'.$row_data)->applyFromArray($style_title);
         $row_data += 2;
         
@@ -408,11 +429,12 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $sheet->setCellValue('E'.$row_data, 'Kurir Delivery');
         $sheet->setCellValue('F'.$row_data, 'Kode Resi');
         $sheet->setCellValue('G'.$row_data, 'Nama CS');
-        $sheet->setCellValue('H'.$row_data, 'Harga');
-        $sheet->setCellValue('I'.$row_data, 'Ongkir');
-        $sheet->setCellValue('J'.$row_data, 'Keterangan');
+        $sheet->setCellValue('H'.$row_data, 'No HP Seller');
+        $sheet->setCellValue('I'.$row_data, 'Harga');
+        $sheet->setCellValue('J'.$row_data, 'Ongkir');
+        $sheet->setCellValue('K'.$row_data, 'Keterangan');
         
-        for($i = 0; $i <= 8; $i++) {
+        for($i = 0; $i <= 9; $i++) {
             $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_thead);
         }
         $row_data++;
@@ -420,16 +442,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $pending_urut = 1;
         foreach($sql_pending_data as $pending_data){
             $sheet->setCellValue($col_first.$row_data, $pending_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $pending_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $pending_data['daily_sequence_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($pending_data['kurir_pick_up']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($pending_data['kurir_delivery']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($pending_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 5).$row_data, strtoupper($pending_data['cs_name']));
-            $sheet->setCellValue(get_col($col_first, 6).$row_data, $pending_data['price']);
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, $pending_data['shiping_cost']);
-            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($pending_data['status_delivery']));
+            $sheet->setCellValueExplicit(get_col($col_first, 6).$row_data, '+' . $pending_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue(get_col($col_first, 7).$row_data, $pending_data['price']);
+            $sheet->setCellValue(get_col($col_first, 8).$row_data, $pending_data['shiping_cost']);
+            $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($pending_data['status_delivery']));
 
-            for($i = 0; $i <= 8; $i++) {
+            for($i = 0; $i <= 9; $i++) {
                 $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
             }
             $row_data++;
@@ -437,19 +460,21 @@ include '../../config/local_date.php'; // Load Database Koneksi
         
         // Add totals for pending table
         if($pending_data_count > 0) {
-            $sheet->setCellValue('G'.$row_data, 'TOTAL PENDING:');
-            $sheet->setCellValue('H'.$row_data, $pending_total_price);
-            $sheet->setCellValue('I'.$row_data, $pending_total_shipping);
+            $sheet->setCellValue('H'.$row_data, 'TOTAL PENDING:');
+            $sheet->setCellValue('I'.$row_data, $pending_total_price);
+            $sheet->setCellValue('J'.$row_data, $pending_total_shipping);
+            $sheet->setCellValue('K'.$row_data, $pending_total_price - $pending_total_shipping);
             
-            $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('K'.$row_data)->applyFromArray($style_thead);
         }
 
         /* Cancel Table */
         $row_data += 3;
         $sheet->setCellValue('B'.$row_data, 'TABEL CANCEL HARI INI');
-        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':J'.$row_data);
+        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':K'.$row_data);
         $spreadsheet->getActiveSheet()->getStyle('B'.$row_data)->applyFromArray($style_title);
         $row_data += 2;
         
@@ -460,11 +485,12 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $sheet->setCellValue('E'.$row_data, 'Kurir Delivery');
         $sheet->setCellValue('F'.$row_data, 'Kode Resi');
         $sheet->setCellValue('G'.$row_data, 'Nama CS');
-        $sheet->setCellValue('H'.$row_data, 'Harga');
-        $sheet->setCellValue('I'.$row_data, 'Ongkir');
-        $sheet->setCellValue('J'.$row_data, 'Keterangan');
+        $sheet->setCellValue('H'.$row_data, 'No hp seller');
+        $sheet->setCellValue('I'.$row_data, 'Harga');
+        $sheet->setCellValue('J'.$row_data, 'Ongkir');
+        $sheet->setCellValue('K'.$row_data, 'Keterangan');
         
-        for($i = 0; $i <= 8; $i++) {
+        for($i = 0; $i <= 9; $i++) {
             $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_thead);
         }
         $row_data++;
@@ -472,16 +498,17 @@ include '../../config/local_date.php'; // Load Database Koneksi
         $cancel_urut = 1;
         foreach($sql_cancel_data as $cancel_data){
             $sheet->setCellValue($col_first.$row_data, $cancel_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['daily_sequence_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['kurir_pick_up']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($cancel_data['kurir_delivery']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($cancel_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 5).$row_data, strtoupper($cancel_data['cs_name']));
-            $sheet->setCellValue(get_col($col_first, 6).$row_data, $cancel_data['price']);
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, $cancel_data['shiping_cost']);
-            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($cancel_data['status_delivery']));
+            $sheet->setCellValueExplicit(get_col($col_first, 6).$row_data, $cancel_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue(get_col($col_first, 7).$row_data, $cancel_data['price']);
+            $sheet->setCellValue(get_col($col_first, 8).$row_data, $cancel_data['shiping_cost']);
+            $sheet->setCellValue(get_col($col_first, 9).$row_data, strtoupper($cancel_data['status_delivery']));
 
-            for($i = 0; $i <= 8; $i++) {
+            for($i = 0; $i <= 9; $i++) {
                 $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
             }
             $row_data++;
@@ -489,23 +516,37 @@ include '../../config/local_date.php'; // Load Database Koneksi
         
         // Add totals for cancel table
         if($cancel_data_count > 0) {
-            $sheet->setCellValue('G'.$row_data, 'TOTAL CANCEL:');
-            $sheet->setCellValue('H'.$row_data, $cancel_total_price);
-            $sheet->setCellValue('I'.$row_data, $cancel_total_shipping);
+            $sheet->setCellValue('H'.$row_data, 'TOTAL CANCEL:');
+            $sheet->setCellValue('I'.$row_data, $cancel_total_price);
+            $sheet->setCellValue('J'.$row_data, $cancel_total_shipping);
+            $sheet->setCellValue('K'.$row_data, $cancel_total_price - $cancel_total_shipping);
             
-            $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('K'.$row_data)->applyFromArray($style_thead);
         }
     /* End Tables */ 
 /* Body Content */
 
 /* Configuration Save File To Excel */
+    $filename = 'Data Delivery.xlsx';
     $writer = new Xlsx($spreadsheet);
-    $writer->save('Data Delivery.xlsx');
-    header('Content-type: application/xlsx');
-
-    header('Content-Disposition: attachment; filename="Data Delivery.xlsx"'); // It will be called downloaded
-    readfile('Data Delivery.xlsx'); // The PDF source is in original
+    $writer->save($filename);
+    
+    // Clear any previous output
+    if (ob_get_contents()) ob_clean();
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    readfile($filename);
+    unlink($filename); // Clean up temporary file
 /* Configuration Save File To Excel */
 ?>

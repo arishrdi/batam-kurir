@@ -42,7 +42,8 @@ include '../../config/local_date.php'; // Load Database Koneksi
             dlv_pickup.price,
             dlv_pickup.shiping_cost,
             dlv_pickup.picture,
-            dlv_pickup.status_pickup
+            dlv_pickup.status_pickup,
+            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
         FROM dlv_pickup 
             JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
         WHERE 1=1";
@@ -110,14 +111,15 @@ include '../../config/local_date.php'; // Load Database Koneksi
                 CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                dlv_pickup.status_pickup,
-                dlv_pickup.date_created
+                trx_delivery.status_delivery,
+                dlv_pickup.date_created,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
                     AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE dlv_pickup.status_pickup='CANCEL' 
-                AND DATE_FORMAT(dlv_pickup.pickup_date, '%Y-%m') = '$current_month'";
+            WHERE trx_delivery.status_delivery='CANCEL' 
+                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'";
         
         $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id DESC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
@@ -305,7 +307,7 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $shiping_cost = $val_data['shiping_cost'];
 
             $sheet->setCellValue($col_first.$row_data, $index);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $val_data['daily_sequence_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($val_data['kurir_name']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($val_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($val_data['cs_name']));
@@ -336,21 +338,22 @@ include '../../config/local_date.php'; // Load Database Koneksi
 
         /* Cancel Table */
         $sheet->setCellValue('B'.$row_data, 'TABEL CANCEL - '.['','JANUARI','FEBRUARI','MARET','APRIL','MEI','JUNI','JULI','AGUSTUS','SEPTEMBER','OKTOBER','NOVEMBER','DESEMBER'][date('n')] . ' ' . date('Y'));
-        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':I'.$row_data);
+        $spreadsheet->getActiveSheet()->mergeCells('B'.$row_data.':J'.$row_data);
         $spreadsheet->getActiveSheet()->getStyle('B'.$row_data)->applyFromArray($style_title);
         $row_data += 2;
         
-        // Cancel table headers - match HTML structure (No, ID, Kurir Delivery, Kode Resi, Nama CS, Harga, Ongkir, Keterangan)
+        // Cancel table headers - match HTML structure (No, ID, Kurir Delivery, Kode Resi, Nama CS, No HP Seller, Harga, Ongkir, Keterangan)
         $sheet->setCellValue('B'.$row_data, 'No');
         $sheet->setCellValue('C'.$row_data, 'ID');
         $sheet->setCellValue('D'.$row_data, 'Kurir Delivery');
         $sheet->setCellValue('E'.$row_data, 'Kode Resi');
         $sheet->setCellValue('F'.$row_data, 'Nama CS');
-        $sheet->setCellValue('G'.$row_data, 'Harga');
-        $sheet->setCellValue('H'.$row_data, 'Ongkir');
-        $sheet->setCellValue('I'.$row_data, 'Keterangan');
+        $sheet->setCellValue('G'.$row_data, 'No HP Seller');
+        $sheet->setCellValue('H'.$row_data, 'Harga');
+        $sheet->setCellValue('I'.$row_data, 'Ongkir');
+        $sheet->setCellValue('J'.$row_data, 'Keterangan');
         
-        for($i = 0; $i <= 7; $i++) {
+        for($i = 0; $i <= 8; $i++) {
             $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_thead);
         }
         $row_data++;
@@ -361,15 +364,16 @@ include '../../config/local_date.php'; // Load Database Koneksi
             $cancel_shipping_cost = $cancel_data['shiping_cost'];
 
             $sheet->setCellValue($col_first.$row_data, $cancel_urut++);
-            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['pickup_id']);
+            $sheet->setCellValue(get_col($col_first, 1).$row_data, $cancel_data['daily_sequence_id']);
             $sheet->setCellValue(get_col($col_first, 2).$row_data, strtoupper($cancel_data['delivery_kurir_name']));
             $sheet->setCellValue(get_col($col_first, 3).$row_data, strtoupper($cancel_data['resi_code']));
             $sheet->setCellValue(get_col($col_first, 4).$row_data, strtoupper($cancel_data['cs_name']));
-            $sheet->setCellValue(get_col($col_first, 5).$row_data, $cancel_price);
-            $sheet->setCellValue(get_col($col_first, 6).$row_data, $cancel_shipping_cost);
-            $sheet->setCellValue(get_col($col_first, 7).$row_data, strtoupper($cancel_data['status_pickup']));
+            $sheet->setCellValueExplicit(get_col($col_first, 5).$row_data, $cancel_data['seller_phone_no'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue(get_col($col_first, 6).$row_data, $cancel_price);
+            $sheet->setCellValue(get_col($col_first, 7).$row_data, $cancel_shipping_cost);
+            $sheet->setCellValue(get_col($col_first, 8).$row_data, strtoupper($cancel_data['status_delivery']));
 
-            for($i = 0; $i <= 7; $i++) {
+            for($i = 0; $i <= 8; $i++) {
                 $spreadsheet->getActiveSheet()->getStyle(get_col($col_first, $i).$row_data)->applyFromArray($style_tbody);
             }
             $row_data++;
@@ -377,25 +381,37 @@ include '../../config/local_date.php'; // Load Database Koneksi
         
         // Add totals for cancel table
         if($cancel_data_count > 0) {
-            $sheet->setCellValue('F'.$row_data, 'TOTAL CANCEL:');
-            $sheet->setCellValue('G'.$row_data, $cancel_total_price);
-            $sheet->setCellValue('H'.$row_data, $cancel_total_shipping);
-            $sheet->setCellValue('I'.$row_data, $cancel_total_price - $cancel_total_shipping);
+            $sheet->setCellValue('G'.$row_data, 'TOTAL CANCEL:');
+            $sheet->setCellValue('H'.$row_data, $cancel_total_price);
+            $sheet->setCellValue('I'.$row_data, $cancel_total_shipping);
+            $sheet->setCellValue('J'.$row_data, $cancel_total_price - $cancel_total_shipping);
             
-            $spreadsheet->getActiveSheet()->getStyle('F'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('G'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('H'.$row_data)->applyFromArray($style_thead);
             $spreadsheet->getActiveSheet()->getStyle('I'.$row_data)->applyFromArray($style_thead);
+            $spreadsheet->getActiveSheet()->getStyle('J'.$row_data)->applyFromArray($style_thead);
         }
     /* End All Tables */
 /* Body Content */
 
 /* Configuration Save File To Excel */
+    $filename = 'Data Pick Up.xlsx';
     $writer = new Xlsx($spreadsheet);
-    $writer->save('Data Pick Up.xlsx');
-    header('Content-type: application/xlsx');
-
-    header('Content-Disposition: attachment; filename="Data Pick Up.xlsx"'); // It will be called downloaded
-    readfile('Data Pick Up.xlsx'); // The PDF source is in original
+    $writer->save($filename);
+    
+    // Clear any previous output
+    if (ob_get_contents()) ob_clean();
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    readfile($filename);
+    unlink($filename); // Clean up temporary file
 /* Configuration Save File To Excel */
 ?>

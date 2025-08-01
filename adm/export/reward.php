@@ -229,11 +229,23 @@ include '../../config/local_date.php'; // Load Database Koneksi
 /* Body Content */
 
 /* Configuration Save File To Excel */
+    $filename = 'Data Reward.xlsx';
     $writer = new Xlsx($spreadsheet);
-    $writer->save('Data Reward.xlsx');
-    header('Content-type: application/xlsx');
-
-    header('Content-Disposition: attachment; filename="Data Reward.xlsx"'); // It will be called downloaded
-    readfile('Data Reward.xlsx'); // The PDF source is in original
+    $writer->save($filename);
+    
+    // Clear any previous output
+    if (ob_get_contents()) ob_clean();
+    
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: max-age=0');
+    header('Cache-Control: max-age=1');
+    header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+    header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . ' GMT');
+    header('Cache-Control: cache, must-revalidate');
+    header('Pragma: public');
+    
+    readfile($filename);
+    unlink($filename); // Clean up temporary file
 /* Configuration Save File To Excel */
 ?>
