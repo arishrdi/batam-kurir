@@ -17,6 +17,10 @@
     <link rel="stylesheet" href="../theme/dist/css/wizard.css">
     <!-- Theme style -->
     <?php
+    
+    // error_reporting(E_ALL);
+    // ini_set('display_errors', 1);
+
     include '../config/db.php';
     $date       = ($_GET['date'] ?? "") != "" ? date('Y-m-d', strtotime($_GET['date'])) : '';
     $resi       = ($_GET['resi'] ?? "") != "" ? $_GET['resi'] : '';
@@ -49,7 +53,8 @@
             AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
     WHERE 1=1";
 
-    $cek_data = mysqli_query($con, "$query_data WHERE dlv_pickup.resi_code='$resi'");
+    // $cek_data = mysqli_query($con, "$query_data WHERE dlv_pickup.resi_code='$resi'");
+    $cek_data = mysqli_query($con, "$query_data AND dlv_pickup.resi_code='$resi'");
 
     // $row_cek_data = mysqli_num_rows($cek_data);
 
