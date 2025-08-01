@@ -38,7 +38,8 @@
         dlv_pickup.price,
         dlv_pickup.shiping_cost,
         dlv_pickup.status_pickup,
-        trx_delivery.status_delivery
+        trx_delivery.status_delivery,
+        ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
     FROM dlv_pickup 
         JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
         LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -125,7 +126,8 @@
                 dlv_pickup.seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery
+                trx_delivery.status_delivery,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -169,7 +171,8 @@
                 dlv_pickup.seller_phone_no,
                 dlv_pickup.price,
                 dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery
+                trx_delivery.status_delivery,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -298,7 +301,7 @@
     ?>
             <tr class="fs-13 text-dark hover-light text-nowrap">
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
-                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['delivery_id'] ?></td>
+                <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $rows['daily_sequence_id'] ?></strong></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_pick_up'] ?></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_delivery'] ?></td>
                 <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
@@ -431,7 +434,7 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_no_urut++ . '.'; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $pending_rows['daily_sequence_id'] ?></strong></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_pick_up'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $pending_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $pending_rows['resi_code'] ?></td>
@@ -501,7 +504,7 @@
                                                 ?>
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_id'] ?></td>
+                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $cancel_rows['daily_sequence_id'] ?></strong></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_pick_up'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['kurir_delivery'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>

@@ -167,7 +167,6 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
-                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Daily ID</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
@@ -183,7 +182,7 @@
                                                 <?php
                                                 if ($all_data <= 0) {
                                                     echo '<tr>
-                                                        <td colspan="11" class="text-center fs-12">Record Not Found</td>
+                                                        <td colspan="10" class="text-center fs-12">Record Not Found</td>
                                                     </tr>';
                                                 } else {
                                                     foreach ($sql_data as $rows) {
@@ -195,7 +194,6 @@
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $rows['daily_sequence_id'] ?></strong></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $rows['cs_name'] ?></td>
@@ -273,7 +271,7 @@
                                                 } ?>
                                                 <?php if ($all_data > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="6"></td>
+                                                        <td colspan="5"></td>
                                                         <td class="bg-gray text-right py-2 fs-13">TOTAL:</td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $total_price ?></td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $total_shipping ?></td>
@@ -305,7 +303,6 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-danger text-white lh-3 text-nowrap text-uppercase fs-12">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
-                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Daily ID</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
@@ -320,7 +317,7 @@
                                                 <?php
                                                 if ($cancel_data_count <= 0) {
                                                     echo '<tr>
-                                                        <td colspan="10" class="text-center fs-12">No Cancelled Records Found</td>
+                                                        <td colspan="9" class="text-center fs-12">No Cancelled Records Found</td>
                                                     </tr>';
                                                 } else {
                                                     foreach ($sql_cancel_data as $cancel_rows) {
@@ -330,7 +327,6 @@
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $cancel_rows['daily_sequence_id'] ?></strong></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
@@ -343,7 +339,7 @@
                                                 } ?>
                                                 <?php if ($cancel_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="6"></td>
+                                                        <td colspan="5"></td>
                                                         <td class="bg-gray text-right py-2 fs-13">TOTAL CANCEL:</td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price ?></td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>

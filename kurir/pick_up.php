@@ -13,42 +13,56 @@
 
         // Query Data
         $query_data     = "SELECT 
-            dlv_pickup.id AS pickup_id,
-            dlv_pickup.pickup_date,
-            dlv_pickup.resi_code,
-            dlv_pickup.kurir_id,
-            mst_kurir.kurir_name,
-            dlv_pickup.cs_name,
-            CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
-            dlv_pickup.price,
-            dlv_pickup.shiping_cost,
-            dlv_pickup.status_pickup,
-            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-        FROM dlv_pickup 
-            JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-        WHERE dlv_pickup.kurir_id={$data_kurir['id']} AND 1=1";
+            pickup_with_sequence.pickup_id,
+            pickup_with_sequence.pickup_date,
+            pickup_with_sequence.resi_code,
+            pickup_with_sequence.kurir_id,
+            pickup_with_sequence.kurir_name,
+            pickup_with_sequence.cs_name,
+            pickup_with_sequence.seller_phone_no,
+            pickup_with_sequence.price,
+            pickup_with_sequence.shiping_cost,
+            pickup_with_sequence.status_pickup,
+            pickup_with_sequence.daily_sequence_id
+        FROM (
+            SELECT 
+                dlv_pickup.id AS pickup_id,
+                dlv_pickup.pickup_date,
+                dlv_pickup.resi_code,
+                dlv_pickup.kurir_id,
+                mst_kurir.kurir_name,
+                dlv_pickup.cs_name,
+                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+                dlv_pickup.price,
+                dlv_pickup.shiping_cost,
+                dlv_pickup.status_pickup,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+            FROM dlv_pickup 
+                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+        ) AS pickup_with_sequence
+        WHERE pickup_with_sequence.kurir_id={$data_kurir['id']} AND 1=1";
         
         /* Jika Pencarian Aktif */
         if ($_GET['cari'] ?? "" != "") {
             $pencarian  = $_GET['cari'];
-            $query_data = $query_data . " AND (dlv_pickup.resi_code LIKE '%$pencarian%'
-                OR dlv_pickup.cs_name LIKE '%$pencarian%'
-                OR dlv_pickup.seller_phone_no LIKE '%$pencarian%')";
+            $query_data = $query_data . " AND (pickup_with_sequence.resi_code LIKE '%$pencarian%'
+                OR pickup_with_sequence.cs_name LIKE '%$pencarian%'
+                OR pickup_with_sequence.seller_phone_no LIKE '%$pencarian%')";
         } else {
             $pencarian  = '';
         }
 
         if ($_GET['date'] ?? "" != "") {
             $date       = $_GET['date'];
-            $query_data = $query_data . " AND dlv_pickup.pickup_date='$date'";
+            $query_data = $query_data . " AND pickup_with_sequence.pickup_date='$date'";
         } else {
             $date       = date('Y-m-d');
-            $query_data = $query_data . " AND dlv_pickup.pickup_date='$date'";
+            $query_data = $query_data . " AND pickup_with_sequence.pickup_date='$date'";
         }
         /* Jika Pencarian Aktif */
         
         // Menampilkan Data
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY pickup_with_sequence.pickup_id ASC, pickup_with_sequence.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
@@ -74,6 +88,9 @@
         /* Cancel Table Data - Current Month for this kurir */
         $current_month = date('Y-m');
         $query_cancel = "SELECT 
+            cancel_with_sequence.*
+        FROM (
+            SELECT 
                 dlv_pickup.id AS pickup_id,
                 dlv_pickup.pickup_date,
                 dlv_pickup.resi_code,
@@ -95,10 +112,11 @@
                 JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
                     AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
             WHERE trx_delivery.status_delivery='CANCEL' 
-                AND trx_delivery.kurir_id={$data_kurir['id']}
-                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'";
+                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'
+        ) AS cancel_with_sequence
+        WHERE cancel_with_sequence.kurir_id = {$data_kurir['id']}";
 
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id ASC, delivery_kurir_name ASC");
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.pickup_id ASC, cancel_with_sequence.delivery_kurir_name ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
         $cancel_no_urut = 1;
 
@@ -142,7 +160,6 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-gray text-white lh-3 text-nowrap text-uppercase fs-12">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
-                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Daily ID</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-2 text-center" style="vertical-align: middle !important;">Kurir Pick Up</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
@@ -167,7 +184,6 @@
                                                         <tr class="fs-13 text-dark hover-light">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $no_urut++ . '.'; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $rows['daily_sequence_id'] ?></strong></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $rows['cs_name'] ?></td>
@@ -189,7 +205,7 @@
                                                 } ?>
                                                 <?php if ($all_data > 0) { ?>
                                                 <tr class="bg-light text-bold">
-                                                    <td colspan="6"></td>
+                                                    <td colspan="5"></td>
                                                     <td class="bg-gray text-right py-2 fs-13">TOTAL:</td>
                                                     <td class="bg-gray text-center py-2 fs-13"><?= $total_price ?></td>
                                                     <td class="bg-gray text-center py-2 fs-13"><?= $total_shipping ?></td>
@@ -225,7 +241,6 @@
                                             <thead>
                                                 <tr class="bg-transparent bg-danger text-white lh-3 text-nowrap text-uppercase fs-12">
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">No</th>
-                                                    <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Daily ID</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">ID</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kurir Delivery</th>
                                                     <th class="py-0 lh-5 text-center" style="vertical-align: middle !important;">Kode Resi</th>
@@ -250,7 +265,6 @@
                                                         <tr class="fs-13 text-dark hover-light text-nowrap">
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_no_urut++ . '.'; ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><strong><?= $cancel_rows['daily_sequence_id'] ?></strong></td>
-                                                            <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['pickup_id'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center"><?= $cancel_rows['delivery_kurir_name'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['resi_code'] ?></td>
                                                             <td style="vertical-align: top;" class="py-2 lh-3 text-center text-uppercase"><?= $cancel_rows['cs_name'] ?></td>
@@ -263,7 +277,7 @@
                                                 } ?>
                                                 <?php if ($cancel_data_count > 0) { ?>
                                                     <tr class="bg-light text-bold">
-                                                        <td colspan="6"></td>
+                                                        <td colspan="5"></td>
                                                         <td class="bg-gray text-right py-2 fs-13">TOTAL CANCEL:</td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_price ?></td>
                                                         <td class="bg-gray text-center py-2 fs-13"><?= $cancel_total_shipping ?></td>
