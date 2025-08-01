@@ -13,56 +13,75 @@
 
         // Query Data - Show latest delivery attempt per pickup
         $query_data     = "SELECT
-            dlv_pickup.id AS pickup_id,
-            trx_delivery.id AS delivery_id,
-            dlv_pickup.pickup_date,
-            trx_delivery.delivery_date,
-            dlv_pickup.kurir_id AS kurir_pick_up_id,
-            mst_kurir.kurir_name AS kurir_pick_up,
-            CASE 
-                WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
-                ELSE ''
-            END AS kurir_delivery_id,
-            CASE
-                WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
-                ELSE '-'
-            END AS kurir_delivery,
-            dlv_pickup.resi_code,
-            dlv_pickup.cs_name,
-            CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
-            dlv_pickup.price,
-            dlv_pickup.shiping_cost,
-            dlv_pickup.status_pickup,
-            trx_delivery.status_delivery,
-            ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-        FROM dlv_pickup 
-            JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-            LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
-                AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-        WHERE trx_delivery.kurir_id={$data_kurir['id']} AND 1=1";
+            delivery_with_sequence.pickup_id,
+            delivery_with_sequence.delivery_id,
+            delivery_with_sequence.pickup_date,
+            delivery_with_sequence.delivery_date,
+            delivery_with_sequence.kurir_pick_up_id,
+            delivery_with_sequence.kurir_pick_up,
+            delivery_with_sequence.kurir_delivery_id,
+            delivery_with_sequence.kurir_delivery,
+            delivery_with_sequence.resi_code,
+            delivery_with_sequence.cs_name,
+            delivery_with_sequence.seller_phone_no,
+            delivery_with_sequence.price,
+            delivery_with_sequence.shiping_cost,
+            delivery_with_sequence.status_pickup,
+            delivery_with_sequence.status_delivery,
+            delivery_with_sequence.daily_sequence_id
+        FROM (
+            SELECT
+                dlv_pickup.id AS pickup_id,
+                trx_delivery.id AS delivery_id,
+                dlv_pickup.pickup_date,
+                trx_delivery.delivery_date,
+                dlv_pickup.kurir_id AS kurir_pick_up_id,
+                mst_kurir.kurir_name AS kurir_pick_up,
+                CASE 
+                    WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
+                    ELSE ''
+                END AS kurir_delivery_id,
+                CASE
+                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                    ELSE '-'
+                END AS kurir_delivery,
+                dlv_pickup.resi_code,
+                dlv_pickup.cs_name,
+                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+                dlv_pickup.price,
+                dlv_pickup.shiping_cost,
+                dlv_pickup.status_pickup,
+                trx_delivery.status_delivery,
+                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+            FROM dlv_pickup 
+                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+        ) AS delivery_with_sequence
+        WHERE delivery_with_sequence.kurir_delivery_id='{$data_kurir['id']}' AND 1=1";
 
         /* Jika Pencarian Aktif */
         if ($_GET['cari'] ?? "" != "") {
             $pencarian  = $_GET['cari'];
-            $query_data = $query_data . " AND (dlv_pickup.resi_code LIKE '%$pencarian%'
-                OR dlv_pickup.cs_name LIKE '%$pencarian%'
-                OR dlv_pickup.seller_phone_no LIKE '%$pencarian%'
-                OR trx_delivery.status_delivery='$pencarian')";
+            $query_data = $query_data . " AND (delivery_with_sequence.resi_code LIKE '%$pencarian%'
+                OR delivery_with_sequence.cs_name LIKE '%$pencarian%'
+                OR delivery_with_sequence.seller_phone_no LIKE '%$pencarian%'
+                OR delivery_with_sequence.status_delivery='$pencarian')";
         } else {
             $pencarian  = '';
         }
 
         if ($_GET['date'] ?? "" != "") {
             $date       = $_GET['date'];
-            $query_data = $query_data . " AND trx_delivery.delivery_date='$date'";
+            $query_data = $query_data . " AND delivery_with_sequence.delivery_date='$date'";
         } else {
             $date       = date('Y-m-d');
-            $query_data = $query_data . " AND trx_delivery.delivery_date='$date'";
+            $query_data = $query_data . " AND delivery_with_sequence.delivery_date='$date'";
         }
         /* Jika Pencarian Aktif */
 
         // Menampilkan Data
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY delivery_with_sequence.pickup_id ASC, delivery_with_sequence.kurir_pick_up ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
