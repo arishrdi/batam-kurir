@@ -86,3 +86,7 @@ The system includes several utility functions in `config/db.php`:
 - All dates use Asia/Jakarta timezone
 - Export functionality uses PHPSpreadsheet for Excel files
 - SweetAlert2 used for confirmations and notifications
+
+## Development Recommendations
+
+- Use consistency "ID" all across tables

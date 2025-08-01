@@ -79,7 +79,7 @@
         }
 
         /* Menampilkan Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY trx_delivery.id ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
@@ -104,96 +104,33 @@
         $sql_data = $main_temp_data;
         $total_delivery_summary = $main_total_price - $pending_summary_total - $cancel_summary_total;
 
-        /* Pending Table Data - Today - Show latest delivery attempt per pickup */
-        $today = date('Y-m-d');
-        $query_pending = "SELECT
-                dlv_pickup.id AS pickup_id,
-                trx_delivery.id AS delivery_id,
-                dlv_pickup.pickup_date,
-                trx_delivery.delivery_date,
-                dlv_pickup.kurir_id AS kurir_pick_up_id,
-                mst_kurir.kurir_name AS kurir_pick_up,
-                CASE 
-                    WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
-                    ELSE ''
-                END AS kurir_delivery_id,
-                CASE
-                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
-                    ELSE '-'
-                END AS kurir_delivery,
-                dlv_pickup.resi_code,
-                dlv_pickup.cs_name,
-                dlv_pickup.seller_phone_no,
-                dlv_pickup.price,
-                dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery,
-                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-            FROM dlv_pickup 
-                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
-                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE trx_delivery.status_delivery='PENDING' 
-                AND trx_delivery.delivery_date='$today'";
-
-        $sql_pending_data = mysqli_query($con, "$query_pending ORDER BY trx_delivery.id DESC");
-        $pending_data_count = mysqli_num_rows($sql_pending_data);
-        $pending_no_urut = 1;
-
-        /* Calculate Pending Totals */
+        /* Extract Pending Data from main result set for consistent ID numbering */
+        $sql_pending_data = [];
         $pending_total_price = 0;
         $pending_total_shipping = 0;
-        $pending_temp_data = [];
-        while ($pending_row = mysqli_fetch_assoc($sql_pending_data)) {
-            $pending_temp_data[] = $pending_row;
-            $pending_total_price += $pending_row['price'];
-            $pending_total_shipping += $pending_row['shiping_cost'];
+        foreach ($sql_data as $row) {
+            if ($row['status_delivery'] == 'PENDING') {
+                $sql_pending_data[] = $row;
+                $pending_total_price += $row['price'];
+                $pending_total_shipping += $row['shiping_cost'];
+            }
         }
-        $sql_pending_data = $pending_temp_data;
+        $pending_data_count = count($sql_pending_data);
+        $pending_no_urut = 1;
 
-        /* Cancel Table Data - Today - Show latest delivery attempt per pickup */
-        $query_cancel = "SELECT
-                dlv_pickup.id AS pickup_id,
-                trx_delivery.id AS delivery_id,
-                dlv_pickup.pickup_date,
-                trx_delivery.delivery_date,
-                dlv_pickup.kurir_id AS kurir_pick_up_id,
-                mst_kurir.kurir_name AS kurir_pick_up,
-                CASE 
-                    WHEN trx_delivery.kurir_id != '' THEN trx_delivery.kurir_id
-                    ELSE ''
-                END AS kurir_delivery_id,
-                CASE
-                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
-                    ELSE '-'
-                END AS kurir_delivery,
-                dlv_pickup.resi_code,
-                dlv_pickup.cs_name,
-                dlv_pickup.seller_phone_no,
-                dlv_pickup.price,
-                dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery,
-                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-            FROM dlv_pickup 
-                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
-                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE trx_delivery.status_delivery='CANCEL' 
-                AND trx_delivery.delivery_date='$today'";
-
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY trx_delivery.id DESC");
-        $cancel_data_count = mysqli_num_rows($sql_cancel_data);
-        $cancel_no_urut = 1;
-
-        /* Calculate Cancel Totals */
+        /* Extract Cancel Data from main result set for consistent ID numbering */
+        $sql_cancel_data = [];
         $cancel_total_price = 0;
         $cancel_total_shipping = 0;
-        $cancel_temp_data = [];
-        while ($cancel_row = mysqli_fetch_assoc($sql_cancel_data)) {
-            $cancel_temp_data[] = $cancel_row;
-            $cancel_total_price += $cancel_row['price'];
-            $cancel_total_shipping += $cancel_row['shiping_cost'];
+        foreach ($sql_data as $row) {
+            if ($row['status_delivery'] == 'CANCEL') {
+                $sql_cancel_data[] = $row;
+                $cancel_total_price += $row['price'];
+                $cancel_total_shipping += $row['shiping_cost'];
+            }
         }
-        $sql_cancel_data = $cancel_temp_data;
+        $cancel_data_count = count($sql_cancel_data);
+        $cancel_no_urut = 1;
         ?>
         <!-- Load Nav Header  -->
 
@@ -460,7 +397,7 @@
                                     </div>
                                     <?php if ($pending_data_count > 0) { ?>
                                         <div class="d-inline-block float-left mt-3 fs-13">
-                                            <?= 'Total ' . $pending_data_count . ' pending entries for today' ?>
+                                            <?= 'Total ' . $pending_data_count . ' pending entries' ?>
                                         </div>
                                     <?php } ?>
                                 </div>
@@ -530,7 +467,7 @@
                                     </div>
                                     <?php if ($cancel_data_count > 0) { ?>
                                         <div class="d-inline-block float-left mt-3 fs-13">
-                                            <?= 'Total ' . $cancel_data_count . ' cancelled entries for today' ?>
+                                            <?= 'Total ' . $cancel_data_count . ' cancelled entries' ?>
                                         </div>
                                     <?php } ?>
                                 </div>

@@ -79,28 +79,34 @@
         }
         mysqli_data_seek($sql_top, 0); // Reset pointer for later use
 
-        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
-        $all_data_pending = ($sql_pending) ? mysqli_num_rows($sql_pending) : 0;
-        $no_urut_pending = 1;
+        // Get pending data from main result set for consistent ID numbering
+        $sql_pending_data = [];
+        $sql_cancel_data = [];
+        if ($sql_top && $all_data_top > 0) {
+            mysqli_data_seek($sql_top, 0);
+            while($row = mysqli_fetch_assoc($sql_top)) {
+                if ($row['status_delivery'] == 'PENDING') {
+                    $sql_pending_data[] = $row;
+                } elseif ($row['status_delivery'] == 'CANCEL') {
+                    $sql_cancel_data[] = $row;
+                }
+            }
+            mysqli_data_seek($sql_top, 0); // Reset for main table use
+        }
         
-        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
-        $all_data_cancel = ($sql_cancel) ? mysqli_num_rows($sql_cancel) : 0;
+        $all_data_pending = count($sql_pending_data);
+        $all_data_cancel = count($sql_cancel_data);
+        $no_urut_pending = 1;
         $no_urut_cancel = 1;
 
         // Calculate pending and cancel price sums
         $pending_price_sum = 0;
         $cancel_price_sum = 0;
-        if ($sql_pending && $all_data_pending > 0) {
-            while($row_pending = mysqli_fetch_assoc($sql_pending)) {
-                $pending_price_sum += $row_pending['price'];
-            }
-            mysqli_data_seek($sql_pending, 0);
+        foreach($sql_pending_data as $row_pending) {
+            $pending_price_sum += $row_pending['price'];
         }
-        if ($sql_cancel && $all_data_cancel > 0) {
-            while($row_cancel = mysqli_fetch_assoc($sql_cancel)) {
-                $cancel_price_sum += $row_cancel['price'];
-            }
-            mysqli_data_seek($sql_cancel, 0);
+        foreach($sql_cancel_data as $row_cancel) {
+            $cancel_price_sum += $row_cancel['price'];
         }
 
             // Independent date filter for no-delivery table
@@ -298,7 +304,7 @@
                                                 <td colspan="9" class="text-center fs-12">Record Not Found</td>
                                             </tr>';
                                         } else {
-                                            foreach ($sql_pending as $row_pending) {
+                                            foreach ($sql_pending_data as $row_pending) {
                                                 $price_pending          = $row_pending['price'];
                                                 $shiping_cost_pending   = $row_pending['shiping_cost'];
                                                 
@@ -365,7 +371,7 @@
                                                 <td colspan="9" class="text-center fs-12">Record Not Found</td>
                                             </tr>';
                                         } else {
-                                            foreach ($sql_cancel as $row_cancel) {
+                                            foreach ($sql_cancel_data as $row_cancel) {
                                                 $price_cancel           = $row_cancel['price'];
                                                 $shiping_cost_cancel    = $row_cancel['shiping_cost'];
                                                 

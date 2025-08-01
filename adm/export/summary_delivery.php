@@ -107,12 +107,24 @@ include '../../config/local_date.php'; // Load Database Koneksi
         }
         mysqli_data_seek($sql_top, 0); // Reset pointer for later use
 
-        $sql_pending = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='PENDING' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
-        $all_data_pending = ($sql_pending) ? mysqli_num_rows($sql_pending) : 0;
-        $no_urut_pending = 1;
+        // Get pending data from main result set for consistent ID numbering
+        $sql_pending_data = [];
+        $sql_cancel_data = [];
+        if ($sql_top && $all_data_top > 0) {
+            mysqli_data_seek($sql_top, 0);
+            while($row = mysqli_fetch_assoc($sql_top)) {
+                if ($row['status_delivery'] == 'PENDING') {
+                    $sql_pending_data[] = $row;
+                } elseif ($row['status_delivery'] == 'CANCEL') {
+                    $sql_cancel_data[] = $row;
+                }
+            }
+            mysqli_data_seek($sql_top, 0); // Reset for main table use
+        }
         
-        $sql_cancel = mysqli_query($con, "$query_data AND trx_delivery.status_delivery='CANCEL' ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
-        $all_data_cancel = ($sql_cancel) ? mysqli_num_rows($sql_cancel) : 0;
+        $all_data_pending = count($sql_pending_data);
+        $all_data_cancel = count($sql_cancel_data);
+        $no_urut_pending = 1;
         $no_urut_cancel = 1;
 
         $query_no_delivery  = "SELECT
