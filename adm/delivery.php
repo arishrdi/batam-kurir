@@ -39,7 +39,7 @@
         dlv_pickup.shiping_cost,
         dlv_pickup.status_pickup,
         trx_delivery.status_delivery,
-        ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+        ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
     FROM dlv_pickup 
         JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
         LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -79,7 +79,7 @@
         }
 
         /* Menampilkan Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY mst_kurir.kurir_name ASC, dlv_pickup.id ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 

@@ -37,7 +37,7 @@
                     dlv_pickup.price,
                     dlv_pickup.shiping_cost,
                     dlv_pickup.status_pickup,
-                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
                 FROM dlv_pickup 
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
             ) AS pickup_with_sequence
@@ -73,7 +73,7 @@
         }
 
         /* Menampilkan Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY pickup_with_sequence.pickup_id ASC, pickup_with_sequence.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY pickup_with_sequence.kurir_name ASC, pickup_with_sequence.pickup_id ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
@@ -121,7 +121,7 @@
                     dlv_pickup.shiping_cost,
                     trx_delivery.status_delivery,
                     dlv_pickup.date_created,
-                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
                 FROM dlv_pickup 
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                     LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -141,7 +141,7 @@
             $query_cancel = $query_cancel . " AND cancel_with_sequence.delivery_kurir_name = '$selected_kurir_name'";
         }
 
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.pickup_id ASC, cancel_with_sequence.delivery_kurir_name ASC");
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.delivery_kurir_name ASC, cancel_with_sequence.pickup_id ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
         $cancel_no_urut = 1;
 

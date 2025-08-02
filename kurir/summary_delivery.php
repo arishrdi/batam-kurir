@@ -46,7 +46,7 @@
                     dlv_pickup.shiping_cost,
                     dlv_pickup.status_pickup,
                     trx_delivery.status_delivery,
-                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
                 FROM dlv_pickup 
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                     LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -62,7 +62,7 @@
         /* Jika Pencarian Aktif */
         
         /* Menampilkan Data - Show all delivery statuses */
-        $sql_top = mysqli_query($con, "$query_data ORDER BY delivery_with_sequence.pickup_id ASC, delivery_with_sequence.kurir_pick_up ASC");
+        $sql_top = mysqli_query($con, "$query_data ORDER BY delivery_with_sequence.kurir_pick_up ASC, delivery_with_sequence.pickup_id ASC");
         
         $all_data_top = ($sql_top) ? mysqli_num_rows($sql_top) : 0;
         $no_urut_top = 1;
@@ -152,7 +152,7 @@
                     dlv_pickup.cs_name,
                     dlv_pickup.price,
                     dlv_pickup.shiping_cost,
-                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
                 FROM dlv_pickup 
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                     LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
@@ -160,7 +160,7 @@
             ) AS no_delivery_with_sequence 
             WHERE no_delivery_with_sequence.kurir_pick_up_id={$data_kurir['id']} 
                 AND no_delivery_with_sequence.pickup_date BETWEEN '$no_delivery_from' AND '$no_delivery_to'
-            ORDER BY no_delivery_with_sequence.pickup_id ASC";
+            ORDER BY no_delivery_with_sequence.kurir_pick_up ASC, no_delivery_with_sequence.pickup_id ASC";
             
             $sql_no_delivery    = mysqli_query($con, $query_no_delivery);
             $all_data_no_delivery = mysqli_num_rows($sql_no_delivery);
