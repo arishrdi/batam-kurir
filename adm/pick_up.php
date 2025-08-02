@@ -14,24 +14,38 @@
 
         /* Query Data */
         $query_data     = "SELECT 
-                dlv_pickup.id AS pickup_id,
-                dlv_pickup.pickup_date,
-                dlv_pickup.resi_code,
-                dlv_pickup.kurir_id,
-                mst_kurir.kurir_name,
-                dlv_pickup.cs_name,
-                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
-                dlv_pickup.price,
-                dlv_pickup.shiping_cost,
-                dlv_pickup.status_pickup,
-                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-            FROM dlv_pickup 
-                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                pickup_with_sequence.pickup_id,
+                pickup_with_sequence.pickup_date,
+                pickup_with_sequence.resi_code,
+                pickup_with_sequence.kurir_id,
+                pickup_with_sequence.kurir_name,
+                pickup_with_sequence.cs_name,
+                pickup_with_sequence.seller_phone_no,
+                pickup_with_sequence.price,
+                pickup_with_sequence.shiping_cost,
+                pickup_with_sequence.status_pickup,
+                pickup_with_sequence.daily_sequence_id
+            FROM (
+                SELECT 
+                    dlv_pickup.id AS pickup_id,
+                    dlv_pickup.pickup_date,
+                    dlv_pickup.resi_code,
+                    dlv_pickup.kurir_id,
+                    mst_kurir.kurir_name,
+                    dlv_pickup.cs_name,
+                    CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+                    dlv_pickup.price,
+                    dlv_pickup.shiping_cost,
+                    dlv_pickup.status_pickup,
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                FROM dlv_pickup 
+                    JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+            ) AS pickup_with_sequence
             WHERE 1=1";
         /* Jika Pencarian Aktif */
         if ($_GET['kurir'] ?? "" != "") {
             $kurir_id   = $_GET['kurir'];
-            $query_data = $query_data . " AND dlv_pickup.kurir_id='$kurir_id'";
+            $query_data = $query_data . " AND pickup_with_sequence.kurir_id='$kurir_id'";
 
             $cek_kurir  = mysqli_query($con, "SELECT * FROM mst_kurir WHERE id=$kurir_id");
             $row_kurir  = mysqli_fetch_assoc($cek_kurir);
@@ -43,23 +57,23 @@
 
         if ($_GET['cari'] ?? "" != "") {
             $pencarian  = $_GET['cari'];
-            $query_data = $query_data . " AND (dlv_pickup.resi_code LIKE '%$pencarian%'
-                OR dlv_pickup.cs_name LIKE '%$pencarian%'
-                OR dlv_pickup.seller_phone_no LIKE '%$pencarian%')";
+            $query_data = $query_data . " AND (pickup_with_sequence.resi_code LIKE '%$pencarian%'
+                OR pickup_with_sequence.cs_name LIKE '%$pencarian%'
+                OR pickup_with_sequence.seller_phone_no LIKE '%$pencarian%')";
         } else {
             $pencarian  = '';
         }
 
         if ($_GET['date'] ?? "" != "") {
             $date       = $_GET['date'];
-            $query_data = $query_data . " AND dlv_pickup.pickup_date='$date'";
+            $query_data = $query_data . " AND pickup_with_sequence.pickup_date='$date'";
         } else {
             $date       = date('Y-m-d');
-            $query_data = $query_data . " AND dlv_pickup.pickup_date='$date'";
+            $query_data = $query_data . " AND pickup_with_sequence.pickup_date='$date'";
         }
 
         /* Menampilkan Data */
-        $sql_data       = mysqli_query($con, "$query_data ORDER BY dlv_pickup.id ASC, mst_kurir.kurir_name ASC");
+        $sql_data       = mysqli_query($con, "$query_data ORDER BY pickup_with_sequence.pickup_id ASC, pickup_with_sequence.kurir_name ASC");
         $all_data       = mysqli_num_rows($sql_data);
         $no_urut        = 1;
 
@@ -77,35 +91,57 @@
         /* Cancel Table Data - Current Month */
         $current_month = date('Y-m');
         $query_cancel = "SELECT 
-                dlv_pickup.id AS pickup_id,
-                dlv_pickup.pickup_date,
-                dlv_pickup.resi_code,
-                dlv_pickup.kurir_id,
-                mst_kurir.kurir_name AS pickup_kurir_name,
-                CASE
-                    WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
-                    ELSE '-'
-                END AS delivery_kurir_name,
-                dlv_pickup.cs_name,
-                CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
-                dlv_pickup.price,
-                dlv_pickup.shiping_cost,
-                trx_delivery.status_delivery,
-                dlv_pickup.date_created,
-                ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
-            FROM dlv_pickup 
-                JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
-                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE trx_delivery.status_delivery='CANCEL' 
-                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'";
+                cancel_with_sequence.pickup_id,
+                cancel_with_sequence.pickup_date,
+                cancel_with_sequence.resi_code,
+                cancel_with_sequence.kurir_id,
+                cancel_with_sequence.pickup_kurir_name,
+                cancel_with_sequence.delivery_kurir_name,
+                cancel_with_sequence.cs_name,
+                cancel_with_sequence.seller_phone_no,
+                cancel_with_sequence.price,
+                cancel_with_sequence.shiping_cost,
+                cancel_with_sequence.status_delivery,
+                cancel_with_sequence.date_created,
+                cancel_with_sequence.daily_sequence_id
+            FROM (
+                SELECT 
+                    dlv_pickup.id AS pickup_id,
+                    dlv_pickup.pickup_date,
+                    dlv_pickup.resi_code,
+                    dlv_pickup.kurir_id,
+                    mst_kurir.kurir_name AS pickup_kurir_name,
+                    CASE
+                        WHEN trx_delivery.kurir_id != '' THEN (SELECT kurir_name FROM mst_kurir WHERE id=trx_delivery.kurir_id)
+                        ELSE '-'
+                    END AS delivery_kurir_name,
+                    dlv_pickup.cs_name,
+                    CONCAT('+', dlv_pickup.seller_phone_no) AS seller_phone_no,
+                    dlv_pickup.price,
+                    dlv_pickup.shiping_cost,
+                    trx_delivery.status_delivery,
+                    dlv_pickup.date_created,
+                    ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
+                FROM dlv_pickup 
+                    JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
+                    LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                        AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
+            ) AS cancel_with_sequence
+            WHERE cancel_with_sequence.status_delivery='CANCEL' 
+                AND DATE_FORMAT(cancel_with_sequence.date_created, '%Y-%m') = '$current_month'";
 
-        /* Apply kurir filter to cancel table based on delivery kurir if active */
+        /* Apply kurir filter to cancel table based on selected kurir if active */
         if ($_GET['kurir'] ?? "" != "") {
-            $query_cancel = $query_cancel . " AND trx_delivery.kurir_id='$kurir_id'";
+            // Get the selected kurir name for filtering Cancel Table
+            $selected_kurir_query = mysqli_query($con, "SELECT kurir_name FROM mst_kurir WHERE id='$kurir_id'");
+            $selected_kurir_row = mysqli_fetch_assoc($selected_kurir_query);
+            $selected_kurir_name = $selected_kurir_row['kurir_name'];
+            
+            // Filter Cancel Table by delivery kurir name (who actually cancelled the delivery)
+            $query_cancel = $query_cancel . " AND cancel_with_sequence.delivery_kurir_name = '$selected_kurir_name'";
         }
 
-        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY dlv_pickup.id ASC, delivery_kurir_name ASC");
+        $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.pickup_id ASC, cancel_with_sequence.delivery_kurir_name ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
         $cancel_no_urut = 1;
 

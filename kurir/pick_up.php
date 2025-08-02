@@ -109,12 +109,12 @@
                 ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
                     AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-            WHERE trx_delivery.status_delivery='CANCEL' 
-                AND DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month'
         ) AS cancel_with_sequence
-        WHERE cancel_with_sequence.kurir_id = {$data_kurir['id']}";
+        WHERE cancel_with_sequence.status_delivery='CANCEL' 
+            AND DATE_FORMAT(cancel_with_sequence.date_created, '%Y-%m') = '$current_month'
+            AND cancel_with_sequence.kurir_id = {$data_kurir['id']}";
 
         $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.pickup_id ASC, cancel_with_sequence.delivery_kurir_name ASC");
         $cancel_data_count = mysqli_num_rows($sql_cancel_data);
