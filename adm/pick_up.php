@@ -132,13 +132,8 @@
 
         /* Apply kurir filter to cancel table based on selected kurir if active */
         if ($_GET['kurir'] ?? "" != "") {
-            // Get the selected kurir name for filtering Cancel Table
-            $selected_kurir_query = mysqli_query($con, "SELECT kurir_name FROM mst_kurir WHERE id='$kurir_id'");
-            $selected_kurir_row = mysqli_fetch_assoc($selected_kurir_query);
-            $selected_kurir_name = $selected_kurir_row['kurir_name'];
-            
-            // Filter Cancel Table by delivery kurir name (who actually cancelled the delivery)
-            $query_cancel = $query_cancel . " AND cancel_with_sequence.delivery_kurir_name = '$selected_kurir_name'";
+            // Filter Cancel Table by pickup kurir ID (who originally picked up the package)
+            $query_cancel = $query_cancel . " AND cancel_with_sequence.kurir_id = '$kurir_id'";
         }
 
         $sql_cancel_data = mysqli_query($con, "$query_cancel ORDER BY cancel_with_sequence.delivery_kurir_name ASC, cancel_with_sequence.pickup_id ASC");
