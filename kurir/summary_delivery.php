@@ -132,16 +132,17 @@
             $no_delivery_from = ($_GET['no_delivery_from'] ?? "") != "" ? date('Y-m-d', strtotime($_GET['no_delivery_from'])) : date('Y-m-d', strtotime('-30 days'));
             $no_delivery_to = ($_GET['no_delivery_to'] ?? "") != "" ? date('Y-m-d', strtotime($_GET['no_delivery_to'])) : date('Y-m-d');
             
-            $query_no_delivery  = "SELECT
-                no_delivery_with_sequence.pickup_id,
-                no_delivery_with_sequence.pickup_date,
-                no_delivery_with_sequence.kurir_pick_up_id,
-                no_delivery_with_sequence.kurir_pick_up,
-                no_delivery_with_sequence.resi_code,
-                no_delivery_with_sequence.cs_name,
-                no_delivery_with_sequence.price,
-                no_delivery_with_sequence.shiping_cost,
-                no_delivery_with_sequence.daily_sequence_id
+            // Use the same base query structure as main delivery data for consistent IDs
+            $query_no_delivery = "SELECT
+                all_pickups_with_sequence.pickup_id,
+                all_pickups_with_sequence.pickup_date,
+                all_pickups_with_sequence.kurir_pick_up_id,
+                all_pickups_with_sequence.kurir_pick_up,
+                all_pickups_with_sequence.resi_code,
+                all_pickups_with_sequence.cs_name,
+                all_pickups_with_sequence.price,
+                all_pickups_with_sequence.shiping_cost,
+                all_pickups_with_sequence.daily_sequence_id
             FROM (
                 SELECT
                     dlv_pickup.id AS pickup_id,
@@ -155,12 +156,12 @@
                     ROW_NUMBER() OVER (PARTITION BY dlv_pickup.pickup_date, dlv_pickup.kurir_id ORDER BY dlv_pickup.id ASC) AS daily_sequence_id
                 FROM dlv_pickup 
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
-                    LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
-                WHERE trx_delivery.id IS NULL
-            ) AS no_delivery_with_sequence 
-            WHERE no_delivery_with_sequence.kurir_pick_up_id={$data_kurir['id']} 
-                AND no_delivery_with_sequence.pickup_date BETWEEN '$no_delivery_from' AND '$no_delivery_to'
-            ORDER BY no_delivery_with_sequence.kurir_pick_up ASC, no_delivery_with_sequence.pickup_id ASC";
+            ) AS all_pickups_with_sequence
+            LEFT JOIN trx_delivery ON trx_delivery.pickup_id = all_pickups_with_sequence.pickup_id
+            WHERE trx_delivery.id IS NULL
+                AND all_pickups_with_sequence.kurir_pick_up_id={$data_kurir['id']}
+                AND all_pickups_with_sequence.pickup_date BETWEEN '$no_delivery_from' AND '$no_delivery_to'
+            ORDER BY all_pickups_with_sequence.kurir_pick_up ASC, all_pickups_with_sequence.pickup_id ASC";
             
             $sql_no_delivery    = mysqli_query($con, $query_no_delivery);
             $all_data_no_delivery = mysqli_num_rows($sql_no_delivery);
