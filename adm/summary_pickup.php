@@ -30,6 +30,7 @@
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id) 
             WHERE 1=1 
             -- ORDER BY mst_kurir.kurir_name ASC
             ";

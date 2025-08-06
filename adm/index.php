@@ -7,14 +7,14 @@
         <!-- Load Nav Header -->
         <?php 
         include 'theme/header.php';
-        $month_now          = date('m');
+        $current_month      = date('Y-m');
         $date_now           = date('Y-m-d');
         $first_date_month   = date('Y-m-01');
         $query_deliv        = "SELECT DISTINCT dlv_pickup.id, trx_delivery.status_delivery 
                                FROM dlv_pickup 
                                LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
                                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id)
-                               WHERE MONTH(trx_delivery.delivery_date)='$month_now' AND trx_delivery.id IS NOT NULL AND 1=1";
+                               WHERE DATE_FORMAT(trx_delivery.delivery_date, '%Y-%m') = '$current_month' AND trx_delivery.id IS NOT NULL AND 1=1";
         $sql_deliv_proses   = mysqli_query($con, $query_deliv . " AND trx_delivery.status_delivery='PROSES'");
         $sql_deliv_pending  = mysqli_query($con, $query_deliv . " AND trx_delivery.status_delivery='PENDING'");
         $sql_deliv_cancel   = mysqli_query($con, $query_deliv . " AND trx_delivery.status_delivery='CANCEL'");

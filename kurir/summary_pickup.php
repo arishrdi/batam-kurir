@@ -40,6 +40,7 @@
             FROM dlv_pickup 
                 JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
                 LEFT JOIN trx_delivery ON trx_delivery.pickup_id = dlv_pickup.id 
+                    AND trx_delivery.id = (SELECT MAX(id) FROM trx_delivery t2 WHERE t2.pickup_id = dlv_pickup.id) 
         ) AS pickup_with_sequence
         WHERE pickup_with_sequence.kurir_id=$kurir_id AND 1=1";
 
