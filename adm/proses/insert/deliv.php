@@ -11,6 +11,23 @@ include '../../../config/db.php'; // Load Koneksi DB SQL
     $date_now           = date('Y-m-d');
 /* Tampung Form Data [POST] */
 
+/* Validate required fields */
+if (empty($kurir_id) || $kurir_id == '' || $kurir_id == '0') {
+    echo 'KURIR_REQUIRED';
+    exit();
+}
+
+if (empty($pickup_id) || $pickup_id == '' || $pickup_id == '0') {
+    echo 'PICKUP_REQUIRED'; 
+    exit();
+}
+
+if (empty($delivery_date)) {
+    echo 'DATE_REQUIRED';
+    exit();
+}
+/* Validate required fields */
+
  
 
 $cek_record = mysqli_query($con, "SELECT * FROM trx_delivery WHERE pickup_id='$pickup_id'");

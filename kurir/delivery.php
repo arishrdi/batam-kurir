@@ -468,6 +468,21 @@
                 url.searchParams.set('date', date);
                 window.location.href = url.toString();
             });
+
+            // Add validation for delivery form
+            $('#insert-deliv').on('submit', function(e) {
+                var pickupId = $('select[name="pickup_id"]').val();
+                
+                if (!pickupId || pickupId === '') {
+                    e.preventDefault();
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal',
+                        text: 'Silakan pilih kode resi terlebih dahulu'
+                    });
+                    return false;
+                }
+            });
         });
     </script>
 </body>

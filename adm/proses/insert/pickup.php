@@ -13,8 +13,11 @@ include '../../../config/db.php'; // Load Koneksi DB SQL
     $seller_phone_no    = '62'.$_POST['seller_phone_no'];
     // $price              = preg_replace("/[^0-9]/", "", $_POST['price']);
     // $shiping_cost       = preg_replace("/[^0-9]/", "", $_POST['shiping_cost']);
-    $price              = $_POST['price'];
-    $shiping_cost       = $_POST['shiping_cost'];
+    // $price              = $_POST['price'];
+    // $shiping_cost       = $_POST['shiping_cost'];
+    $price = preg_replace('/[^0-9]/', '', $_POST['price']);
+    $shiping_cost = preg_replace('/[^0-9]/', '', $_POST['shiping_cost']);
+
     $date_created       = date('Y-m-d H:i:s');
 /* Tampung Form Data [POST] */
 

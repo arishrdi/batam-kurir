@@ -158,7 +158,8 @@
                     JOIN mst_kurir ON mst_kurir.id=dlv_pickup.kurir_id
             ) AS all_pickups_with_sequence
             LEFT JOIN trx_delivery ON trx_delivery.pickup_id = all_pickups_with_sequence.pickup_id
-            WHERE trx_delivery.id IS NULL
+            -- WHERE trx_delivery.id IS NULL
+            WHERE (trx_delivery.id IS NULL OR trx_delivery.kurir_id = 0)
                 AND all_pickups_with_sequence.kurir_pick_up_id={$data_kurir['id']}
                 AND all_pickups_with_sequence.pickup_date BETWEEN '$no_delivery_from' AND '$no_delivery_to'
             ORDER BY all_pickups_with_sequence.kurir_pick_up ASC, all_pickups_with_sequence.pickup_id ASC";

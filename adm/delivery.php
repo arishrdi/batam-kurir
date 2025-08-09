@@ -145,13 +145,12 @@
                                     <h6 class="text-bold text-center mb-3">Form Delivery</h6>
                                     <form id="insert-deliv">
                                         <input type="hidden" name="delivery_date" value="<?= date('Y-m-d'); ?>">
-                                        <input type="hidden" name="kurir_id" value="<?= $data_kurir['id'] ?>">
 
                                         <div class="form-group mb-3">
-                                            <select name="kurir_id" class="form-control rounded-sm select2bs4" required>
+                                            <select name="kurir_id" id="kurir_id_select" class="form-control rounded-sm select2bs4" required>
                                                 <option value="">PILIH KURIR</option>
                                                 <?php foreach ($query_kurir as $val_kurir) { ?>
-                                                    <option value="<?= $val_kurir['id'] ?>"><?= strtoupper($val_kurir['kurir_name']) ?></option>
+                                                    <option value="<?= $val_kurir['id'] ?>" <?= isset($data_kurir) && $data_kurir['id'] == $val_kurir['id'] ? 'selected' : '' ?>><?= strtoupper($val_kurir['kurir_name']) ?></option>
                                                 <?php } ?>
                                             </select>
                                         </div>
@@ -496,6 +495,32 @@
                 var url = new URL(currentURL);
                 url.searchParams.set('date', date);
                 window.location.href = url.toString();
+            });
+
+            // Add validation for delivery form
+            $('#insert-deliv').on('submit', function(e) {
+                var kurirId = $('#kurir_id_select').val();
+                var pickupId = $('select[name="pickup_id"]').val();
+                
+                if (!kurirId || kurirId === '') {
+                    e.preventDefault();
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal',
+                        text: 'Silakan pilih kurir terlebih dahulu'
+                    });
+                    return false;
+                }
+                
+                if (!pickupId || pickupId === '') {
+                    e.preventDefault();
+                    Toast.fire({
+                        icon: 'error',
+                        title: 'Validasi Gagal', 
+                        text: 'Silakan pilih kode resi terlebih dahulu'
+                    });
+                    return false;
+                }
             });
 
         });

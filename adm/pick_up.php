@@ -83,8 +83,8 @@
         $temp_data = [];
         while ($row = mysqli_fetch_assoc($sql_data)) {
             $temp_data[] = $row;
-            $total_price += $row['price'];
-            $total_shipping += $row['shiping_cost'];
+            $total_price += (int)$row['price'];
+            $total_shipping += (int)$row['shiping_cost'];
         }
         $sql_data = $temp_data;
 
@@ -146,8 +146,8 @@
         $cancel_temp_data = [];
         while ($cancel_row = mysqli_fetch_assoc($sql_cancel_data)) {
             $cancel_temp_data[] = $cancel_row;
-            $cancel_total_price += $cancel_row['price'];
-            $cancel_total_shipping += $cancel_row['shiping_cost'];
+            $cancel_total_price += (int)$cancel_row['price'];
+            $cancel_total_shipping += (int)$cancel_row['shiping_cost'];
         }
         $sql_cancel_data = $cancel_temp_data;
         ?>
