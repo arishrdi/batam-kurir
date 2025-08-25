@@ -63,9 +63,9 @@
             $no_urut        = 1;
         /* Menampilkan Data */ 
             foreach($sql_data as $row){
-                $array_sumprice[]       = $row['price'];
-                $array_sumcost[]        = $row['shiping_cost'];
-                $totalprice             = $row['price']+$row['shiping_cost'];
+                $array_sumprice[]       = (int)$row['price'];
+                $array_sumcost[]        = (int)$row['shiping_cost'];
+                $totalprice             = (int)$row['price']+(int)$row['shiping_cost'];
 
                 $array_sumtotal_price[] = $totalprice;
             }
@@ -196,10 +196,10 @@
                                             foreach ($sql_data as $rows) {
                                                 $price                  = $rows['price'];
                                                 $shiping_cost           = $rows['shiping_cost'];
-                                                $total_price            = $rows['price']+$rows['shiping_cost'];
-                                                $array_sum_price[]      = $rows['price'];
+                                                $total_price            = (int)$rows['price']+(int)$rows['shiping_cost'];
+                                                $array_sum_price[]      = (int)$rows['price'];
 
-                                                $array_sum_cost[]       = $rows['shiping_cost'];
+                                                $array_sum_cost[]       = (int)$rows['shiping_cost'];
                                                 $array_sum_total_price[]= $total_price;
                                                 ?>
                                                 <tr class="fs-13 text-dark hover-light">

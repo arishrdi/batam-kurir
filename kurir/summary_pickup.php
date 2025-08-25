@@ -117,15 +117,15 @@
                                             foreach ($sql_data as $rows) {
                                                 $price                  = $rows['price'];
                                                 $shiping_cost           = $rows['shiping_cost'];
-                                                $total_price            = $rows['price']+$rows['shiping_cost'];
+                                                $total_price            = (int)$rows['price']+(int)$rows['shiping_cost'];
 
-                                                $array_sum_price[]      = $rows['price'];
+                                                $array_sum_price[]      = (int)$rows['price'];
 
                                                 // if (in_array($paket_status, array('FULL LUNAS'))) {
                                                 //     $array_sum_price[]  = -$rows['shiping_cost'];
                                                 // }
 
-                                                $array_sum_cost[]       = $rows['shiping_cost'];
+                                                $array_sum_cost[]       = (int)$rows['shiping_cost'];
                                                 $array_sum_total_price[]= $total_price;
                                                 ?>
                                                 <tr class="fs-13 text-dark hover-light">
